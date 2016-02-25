@@ -11,20 +11,22 @@ object CountNode extends App {
 
   var datastore = scala.collection.mutable.HashMap[String, HashSet[Int]]()
 
-  var folder = "/home/harper/Downloads/txnLog/affinity-5GB-hotproduct/monitor-0"
-  for (i <- 0 to 29) {
-    var fileName = "{0}/transactions-partition-{1}.log".format(folder, i)
-    Source.fromFile(fileName).getLines().foreach { line =>
-      {
-        if (ptnEt.matcher(line).matches()) {
-          // Ignore the line
-        } else {
-          var matcher = ptnTc.matcher(line)
-          if (matcher.matches()) {
-            var datatype = matcher.group(2)
-            var dataval = matcher.group(3).toInt
+  var folder = "/home/harper/Downloads/txnLog/affinity-5GB-hotsupplier-lowskew/monitor-%d/transactions-partition-%d.log"
+  for (j <- 1 to 9) {
+    for (i <- 0 to 29) {
+      var fileName = folder.format(j, i)
+      Source.fromFile(fileName).getLines().foreach { line =>
+        {
+          if (ptnEt.matcher(line).matches()) {
+            // Ignore the line
+          } else {
+            var matcher = ptnTc.matcher(line)
+            if (matcher.matches()) {
+              var datatype = matcher.group(2)
+              var dataval = matcher.group(3).toInt
 
-            datastore.getOrElseUpdate(datatype, new HashSet[Int]).add(dataval)
+              datastore.getOrElseUpdate(datatype, new HashSet[Int]).add(dataval)
+            }
           }
         }
       }
