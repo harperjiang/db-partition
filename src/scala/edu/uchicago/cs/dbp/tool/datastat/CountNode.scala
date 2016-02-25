@@ -4,33 +4,22 @@ import scala.io.Source
 import java.util.regex.Pattern
 import scala.collection.mutable.HashSet
 
-object CountNode extends App {
-
-  var ptnEt = Pattern.compile("END;\\d+")
-  var ptnTc = Pattern.compile("(\\d+);([a-z]+),(\\d+)")
+class CountNode extends LogProcessor {
 
   var datastore = scala.collection.mutable.HashMap[String, HashSet[Int]]()
 
-  var folder = "/home/harper/Downloads/txnLog/affinity-5GB-hotsupplier-lowskew/monitor-%d/transactions-partition-%d.log"
-  for (j <- 1 to 9) {
-    for (i <- 0 to 29) {
-      var fileName = folder.format(j, i)
-      Source.fromFile(fileName).getLines().foreach { line =>
-        {
-          if (ptnEt.matcher(line).matches()) {
-            // Ignore the line
-          } else {
-            var matcher = ptnTc.matcher(line)
-            if (matcher.matches()) {
-              var datatype = matcher.group(2)
-              var dataval = matcher.group(3).toInt
+  override def addLine(tId: String, datatype: String, dval: String) = {
+    var dataval = dval.toInt
 
-              datastore.getOrElseUpdate(datatype, new HashSet[Int]).add(dataval)
-            }
-          }
-        }
-      }
-    }
+    datastore.getOrElseUpdate(datatype, new HashSet[Int]).add(dataval)
   }
-  datastore.foreach(f => { System.out.println(f._1 + ":" + f._2.size) })
+
+  override def endTran(tId: String) = {
+
+  }
+
+  override def endProcess() = {
+    datastore.foreach(f => { System.out.println(f._1 + ":" + f._2.size) })
+  }
+
 }
