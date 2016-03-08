@@ -1,4 +1,4 @@
-package edu.clarkson.cs.itop.tool.common
+package edu.uchicago.cs.dbp.common
 
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.mapreduce.Reducer

@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.Reducer
 import edu.uchicago.cs.dbp.common.JoinReducer
 import edu.uchicago.cs.dbp.common.MultiKeyJoinMapper
 import edu.uchicago.cs.dbp.common.TextMapper
+import edu.uchicago.cs.dbp.common.types.StringArrayWritable
 
 /**
  * Input: transaction(left)
@@ -48,11 +49,11 @@ class TPJoinReducer2 extends JoinReducer(
  */
 class TPCountMapper extends TextMapper(Array(0));
 
-class TPCountReducer extends Reducer[Array[Text], Array[Text], Text, IntWritable] {
-  override def reduce(key: Array[Text], vals: java.lang.Iterable[Array[Text]],
-    context: Reducer[Array[Text], Array[Text], Text, IntWritable]#Context) = {
+class TPCountReducer extends Reducer[StringArrayWritable, StringArrayWritable, Text, IntWritable] {
+  override def reduce(key: StringArrayWritable, vals: java.lang.Iterable[StringArrayWritable],
+    context: Reducer[StringArrayWritable, StringArrayWritable, Text, IntWritable]#Context) = {
 
-    var tid = key(0)
+    var tid = key.get()(0).asInstanceOf[Text]
     var sum = 0
     vals.foreach(value => { sum += 1 });
     if (sum > 1) {
@@ -69,9 +70,9 @@ class TPCountReducer extends Reducer[Array[Text], Array[Text], Text, IntWritable
  */
 class TPMoveSizeMapper extends TextMapper(Array(0));
 
-class TPMoveSizeReducer extends Reducer[Array[Writable], Array[Writable], Text, IntWritable] {
-  override def reduce(key: Array[Writable], values: java.lang.Iterable[Array[Writable]],
-    context: Reducer[Array[Writable], Array[Writable], Text, IntWritable]#Context) = {
+class TPMoveSizeReducer extends Reducer[StringArrayWritable, StringArrayWritable, Text, IntWritable] {
+  override def reduce(key: StringArrayWritable, values: java.lang.Iterable[StringArrayWritable],
+    context: Reducer[StringArrayWritable, StringArrayWritable, Text, IntWritable]#Context) = {
 
     var pmap = new scala.collection.mutable.HashMap[String, Int]()
     var sizer = new DefaultDataSizer()
@@ -79,8 +80,8 @@ class TPMoveSizeReducer extends Reducer[Array[Writable], Array[Writable], Text, 
     values.foreach {
       value =>
         {
-          var partition = value(0).toString()
-          var datatype = value(1).toString
+          var partition = value.get()(0).toString()
+          var datatype = value.get()(1).toString
           var cursize = pmap.getOrElseUpdate(partition, 0)
           cursize += sizer.size(datatype)
           pmap.put(partition, cursize)
@@ -90,6 +91,6 @@ class TPMoveSizeReducer extends Reducer[Array[Writable], Array[Writable], Text, 
     var sum = pmap.values.sum
     var min = pmap.values.min
 
-    context.write(new Text(key(0).toString), new IntWritable(sum - min))
+    context.write(new Text(key.get()(0).toString), new IntWritable(sum - min))
   }
 }

@@ -58,16 +58,16 @@ class MultiKeyJoinMapper(left: String, right: String, leftJoinIndex: Array[Int],
       case s if s == leftTableName => {
         var values = Array("0");
         values ++= parts
-        var key = extract(parts, leftKeyIndex)
-        key :+ "0"
-        context.write(new StringArrayWritable(key), new StringArrayWritable(values))
+        var nkey = extract(parts, leftKeyIndex)
+        nkey :+= "0"
+        context.write(new StringArrayWritable(nkey), new StringArrayWritable(values))
       }
       case s2 if s2 == rightTableName => {
         var values = Array("1");
         values ++= parts
-        var key = extract(parts, rightKeyIndex)
-        key :+ "1"
-        context.write(new StringArrayWritable(key), new StringArrayWritable(values))
+        var nkey = extract(parts, rightKeyIndex)
+        nkey :+= "1"
+        context.write(new StringArrayWritable(nkey), new StringArrayWritable(values))
       }
       case _ => { throw new IllegalArgumentException(fileName); }
     }
@@ -75,7 +75,7 @@ class MultiKeyJoinMapper(left: String, right: String, leftJoinIndex: Array[Int],
 
   def extract(data: Array[String], index: Array[Int]): Array[String] = {
     var res = Array[String]()
-    index.foreach(res :+ data(_))
+    index.foreach(res :+= data(_))
     return res
   }
 }
@@ -90,7 +90,7 @@ class JoinReducer(filter: (Array[Writable], Array[Writable], Array[Writable]) =>
     context: Reducer[StringArrayWritable, StringArrayWritable, Text, Text]#Context) = {
 
     var buffer = scala.collection.mutable.ListBuffer[Array[Writable]]()
-    var solekey = key.get().drop(key.size() - 1)
+    var solekey = key.get().dropRight(1)
     var reported = false;
     values.foreach(value => {
       var index = value.get()(0).toString.toInt

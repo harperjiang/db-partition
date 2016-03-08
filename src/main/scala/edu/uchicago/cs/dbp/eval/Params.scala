@@ -1,5 +1,5 @@
 package edu.uchicago.cs.dbp.eval
 
 object Params {
-  val clusterSize = 6;
+  val clusterSize = 1;
 }
