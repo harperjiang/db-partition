@@ -1,7 +1,6 @@
 package edu.uchicago.cs.dbp.tool.datastat
 
 import java.util.regex.Pattern
-import scala.collection.mutable.HashSet
 import scala.io.Source
 
 object LogProcess extends App {
