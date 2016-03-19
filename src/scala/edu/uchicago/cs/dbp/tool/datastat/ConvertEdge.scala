@@ -6,7 +6,7 @@ import scala.collection.JavaConversions._
 
 class ConvertEdge extends LogProcessor {
 
-  var mapping = Map("products" -> "P", "parts" -> "R", "suppliers" -> "S", "orders" -> "O", "district" -> "D", "stock" -> "K", "customer" -> "C")
+  var mapping = Map("products" -> "P", "parts" -> "R", "suppliers" -> "S", "orders" -> "O", "district" -> "D", "stock" -> "K", "warehouse" -> "W", "customer" -> "C")
 
   var buffer = new scala.collection.mutable.HashMap[String, java.util.List[String]]()
 
@@ -15,8 +15,11 @@ class ConvertEdge extends LogProcessor {
   }
 
   override def endTran(tId: String) = {
-    var list = buffer.remove(tId)
-    System.out.println("%s:%s".format(tId,list.mkString("\t")))
+    var listc = buffer.remove(tId)
+    if (!listc.isEmpty) {
+      var list = listc.get
+      System.out.println("%s:%s".format(tId, list.mkString("\t")))
+    }
   }
 
   override def endProcess() = {
@@ -24,6 +27,6 @@ class ConvertEdge extends LogProcessor {
   }
 
   def translate(dtype: String, dval: String): String = {
-    return "%s%s".format(mapping.getOrElse(dtype, { throw new IllegalArgumentException(); "" }), dval)
+    return "%s%s".format(mapping.getOrElse(dtype, { throw new IllegalArgumentException(dtype); "" }), dval)
   }
 }

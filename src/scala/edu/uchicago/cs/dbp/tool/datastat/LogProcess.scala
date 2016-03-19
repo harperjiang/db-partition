@@ -4,13 +4,13 @@ import java.util.regex.Pattern
 import scala.collection.mutable.HashSet
 import scala.io.Source
 
-object LogProcss extends App {
-  var ptnEt = Pattern.compile("END;\\d+")
+object LogProcess extends App {
+  var ptnEt = Pattern.compile("END;(\\d+)")
   var ptnTc = Pattern.compile("(\\d+);([a-z]+),(\\d+)")
 
   var folder = "/home/harper/Downloads/txnLog/affinity-5GB-hotsupplier-lowskew/monitor-%d/transactions-partition-%d.log"
 
-  var logProcessor = new CountNode()
+  var logProcessor = new ConvertEdge()
 
   for (j <- 1 to 9) {
     for (i <- 0 to 29) {
