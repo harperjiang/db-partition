@@ -50,7 +50,7 @@ object Evaluate extends App {
 
   def tpJob(conf: Configuration): Job = {
     var job = Job.getInstance(conf, "Transaction Partition Join");
-    job.setJarByClass(classOf[TPJoinTest]);
+    job.setJarByClass(Evaluate.getClass);
     job.setMapperClass(classOf[TPJoinMapper]);
     job.setReducerClass(classOf[TPJoinReducer]);
     job.setNumReduceTasks(Params.clusterSize);
@@ -83,7 +83,7 @@ object Evaluate extends App {
 
   def tpDetailJob(conf: Configuration): Job = {
     var job = Job.getInstance(conf, "Transaction Partition Detail Join");
-    job.setJarByClass(classOf[TPJoinTest]);
+    job.setJarByClass(Evaluate.getClass);
     job.setMapperClass(classOf[TPJoinMapper]);
     job.setReducerClass(classOf[TPJoinReducer2]);
     job.setNumReduceTasks(Params.clusterSize);
