@@ -18,7 +18,7 @@ import edu.uchicago.cs.dbp.common.types.StringArrayWritable
  * Input: partition(right)
  * 						partition_id, data_type, data_id
  *
- * Output: trans_part
+ * Output: tran_part
  *            transaction_id, partition_id
  *
  */
@@ -32,7 +32,7 @@ class TPJoinReducer extends JoinReducer(
   });
 
 /**
- * Output: trans_part_detail
+ * Output: tran_part_detail
  * 					transaction_id, partition_id, data_type, data_id
  */
 class TPJoinReducer2 extends JoinReducer(
@@ -42,9 +42,9 @@ class TPJoinReducer2 extends JoinReducer(
   });
 
 /**
- * Input: trans_part
+ * Input: tran_part
  * 						transaction_id, partition_id
- * Output: trans_sum
+ * Output: tran_sum
  * 						transaction_id, num_partition ( > 1)
  */
 class TPCountMapper extends TextMapper(Array(0));
@@ -63,9 +63,9 @@ class TPCountReducer extends Reducer[StringArrayWritable, StringArrayWritable, T
 }
 
 /**
- * Input: trans_part_detail
+ * Input: tran_part_detail
  * 					transaction_id, partition_id, data_type, data_id
- * Output: trans_move_size
+ * Output: tran_move_size
  * 					transaction_id, data_size
  */
 class TPMoveSizeMapper extends TextMapper(Array(0));

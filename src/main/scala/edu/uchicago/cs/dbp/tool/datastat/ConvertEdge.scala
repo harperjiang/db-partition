@@ -3,6 +3,7 @@ package edu.uchicago.cs.dbp.tool.datastat
 import scala.collection.mutable.HashMap
 import java.util.ArrayList
 import scala.collection.JavaConversions._
+import edu.uchicago.cs.dbp.tool.NameMapper
 
 class ConvertEdge extends LogProcessor {
 

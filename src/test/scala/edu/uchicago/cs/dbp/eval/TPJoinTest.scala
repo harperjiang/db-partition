@@ -1,22 +1,18 @@
 package edu.uchicago.cs.dbp.eval
 
-import org.junit.Test
-import org.junit.Assert._
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.hadoop.io.IntWritable
 import org.apache.hadoop.conf.Configuration
-import org.apache.commons.io.FileUtils
-import java.io.File
 import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.Text
-import edu.uchicago.cs.dbp.common.types.StringArrayWritable
-import edu.uchicago.cs.dbp.common.types.KeyPartitioner
-import edu.uchicago.cs.dbp.common.types.KeyGroupComparator
-import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
 import edu.uchicago.cs.dbp.common.types.KeyGroupComparator.Key2GroupComparator
+import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
+import edu.uchicago.cs.dbp.common.types.StringArrayWritable
 
 class TPJoinTest {
 

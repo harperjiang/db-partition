@@ -5,6 +5,7 @@ import java.util.Collections
 import scala.collection.JavaConversions.seqAsJavaList
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IntWritable
 import org.apache.hadoop.io.NullWritable
@@ -23,16 +24,20 @@ import edu.uchicago.cs.dbp.common.types.StringArrayWritable
 
 object Evaluate extends App {
 
+  var basefolder = "data/greedy1"
+
   var conf = new Configuration()
 
-  // TODO Clear folder
+  // Clear folder
+  var fs = FileSystem.get(conf)
+  fs.delete(path("output"), true)
 
   var tpj = new ControlledJob(tpJob(conf), Collections.emptyList[ControlledJob]());
   var tpdj = new ControlledJob(tpDetailJob(conf), Collections.emptyList[ControlledJob]());
-  
+
   var tpdij = new ControlledJob(tpDistinctJob(conf), List(tpj));
-  var tpddij = new ControlledJob(tpDistinctDetailJob(conf),List(tpdj));
-  
+  var tpddij = new ControlledJob(tpDistinctDetailJob(conf), List(tpdj));
+
   var tpcj = new ControlledJob(tpCountJob(conf), List(tpdij));
   var tpmsj = new ControlledJob(tpMoveSizeJob(conf), List(tpddij));
 
@@ -42,7 +47,7 @@ object Evaluate extends App {
 
   controller.addJob(tpdij);
   controller.addJob(tpddij);
-  
+
   controller.addJob(tpcj);
   controller.addJob(tpmsj);
 
@@ -62,9 +67,9 @@ object Evaluate extends App {
     job.setPartitionerClass(classOf[Key2Partitioner]);
     job.setGroupingComparatorClass(classOf[Key2GroupComparator]);
 
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""));
+    FileInputFormat.addInputPath(job, path("partition"))
+    FileInputFormat.addInputPath(job, path("transaction"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_part_raw"));
     return job
   }
 
@@ -76,8 +81,8 @@ object Evaluate extends App {
     job.setNumReduceTasks(Params.clusterSize);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[NullWritable]);
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""))
+    FileInputFormat.addInputPath(job, path("output/tran_part_raw"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_part"))
     return job;
   }
 
@@ -95,13 +100,13 @@ object Evaluate extends App {
     job.setPartitionerClass(classOf[Key2Partitioner]);
     job.setGroupingComparatorClass(classOf[Key2GroupComparator]);
 
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""))
+    FileInputFormat.addInputPath(job, path("transaction"))
+    FileInputFormat.addInputPath(job, path("partition"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_part_detail_raw"))
     return job
   }
-  
-    def tpDistinctDetailJob(conf: Configuration): Job = {
+
+  def tpDistinctDetailJob(conf: Configuration): Job = {
     var job = Job.getInstance(conf, "Transaction Partition Detail Distinct");
     job.setJarByClass(Evaluate.getClass);
     job.setMapperClass(classOf[DistinctMapper]);
@@ -109,8 +114,8 @@ object Evaluate extends App {
     job.setNumReduceTasks(Params.clusterSize);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[NullWritable]);
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""))
+    FileInputFormat.addInputPath(job, path("output/tran_part_detail_raw"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_part_detail"))
     return job;
   }
 
@@ -124,8 +129,8 @@ object Evaluate extends App {
     job.setMapOutputValueClass(classOf[StringArrayWritable]);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[IntWritable]);
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""))
+    FileInputFormat.addInputPath(job, path("output/tran_part"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_sum"))
     return job;
   }
 
@@ -133,14 +138,18 @@ object Evaluate extends App {
     var job = Job.getInstance(conf, "Transaction Partition Move Sizer");
     job.setJarByClass(Evaluate.getClass);
     job.setMapperClass(classOf[TPMoveSizeMapper]);
-    job.setReducerClass(classOf[TPMoveSizeReducer]);   
+    job.setReducerClass(classOf[TPMoveSizeReducer]);
     job.setNumReduceTasks(Params.clusterSize);
     job.setMapOutputKeyClass(classOf[StringArrayWritable]);
     job.setMapOutputValueClass(classOf[StringArrayWritable]);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[IntWritable]);
-    FileInputFormat.addInputPath(job, new Path(""))
-    FileOutputFormat.setOutputPath(job, new Path(""))
+    FileInputFormat.addInputPath(job, path("output/tran_part_detail"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_move_size"))
     return job;
+  }
+
+  def path(sub: String): Path = {
+    return new Path("%s/%s".format(basefolder, sub))
   }
 }

@@ -1,9 +1,7 @@
 package edu.uchicago.cs.dbp.tool.datastat
 
-import java.util.ArrayList
-
-import scala.collection.JavaConversions.asScalaBuffer
 import java.io.PrintWriter
+import edu.uchicago.cs.dbp.tool.NameMapper
 
 class FlattenTransaction(output: PrintWriter) extends LogProcessor {
 
