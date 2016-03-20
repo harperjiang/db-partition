@@ -11,7 +11,7 @@ object LogProcess extends App {
 
   var folder = "/home/harper/Downloads/txnLog/affinity-5GB-hotproduct/monitor-%d/transactions-partition-%d.log"
 
-  var logProcessor = new FlattenTransaction(new PrintWriter(new FileOutputStream("data/greedy1/tran_obj")))
+  var logProcessor = new FlattenTransaction(new PrintWriter(new FileOutputStream("data/greedy1/transaction")))
 
   for (j <- 0 to 1) {
     for (i <- 0 to 29) {

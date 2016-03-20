@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 object ReColumn extends App {
 
-  recolumn("data/greedy1/partition", Array(2, 0, 1))
+  recolumn("data/rr/partition", Array(0, 1))
 
   def recolumn(filename: String, newseq: Array[Int]) = {
     var output = new PrintWriter(new FileOutputStream("%s.tmp".format(filename)))
@@ -17,11 +17,11 @@ object ReColumn extends App {
 
       var newparts = new ArrayBuffer[String]()
 
-      for (i <- 0 to parts.length - 1)
+      for (i <- 0 to newseq.length - 1)
         newparts += parts(newseq(i))
       output.println(newparts.mkString("\t"))
     })
     output.close()
-    Runtime.getRuntime.exec("mv %s.tmp %s".format(filename, filename))
+    // Runtime.getRuntime.exec("mv %s.tmp %s".format(filename, filename))
   }
 }
