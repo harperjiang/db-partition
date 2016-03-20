@@ -1,4 +1,4 @@
-package edu.clarkson.cs.itop.tool.common
+package edu.uchicago.cs.dbp.common
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
 

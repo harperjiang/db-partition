@@ -21,6 +21,9 @@ import edu.uchicago.cs.dbp.common.DistinctReducer
 import edu.uchicago.cs.dbp.common.types.KeyGroupComparator.Key2GroupComparator
 import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
 import edu.uchicago.cs.dbp.common.types.StringArrayWritable
+import edu.uchicago.cs.dbp.common.CounterParam
+import edu.uchicago.cs.dbp.common.CounterReducer
+import edu.uchicago.cs.dbp.common.CounterMapper
 
 object Evaluate extends App {
 
@@ -41,6 +44,9 @@ object Evaluate extends App {
   var tpcj = new ControlledJob(tpCountJob(conf), List(tpdij));
   var tpmsj = new ControlledJob(tpMoveSizeJob(conf), List(tpddij));
 
+  var tphistoj = new ControlledJob(tpCountHistoJob(conf),List(tpcj))
+  var tpmhistoj = new ControlledJob(tpMoveSizeHistoJob(conf),List(tpmsj));
+  
   var controller = new JobControl("Evaluator")
   controller.addJob(tpj);
   controller.addJob(tpdj);
@@ -50,7 +56,10 @@ object Evaluate extends App {
 
   controller.addJob(tpcj);
   controller.addJob(tpmsj);
-
+  
+  controller.addJob(tphistoj);
+  controller.addJob(tpmhistoj);
+  
   controller.run()
 
   def tpJob(conf: Configuration): Job = {
@@ -79,6 +88,8 @@ object Evaluate extends App {
     job.setMapperClass(classOf[DistinctMapper]);
     job.setReducerClass(classOf[DistinctReducer]);
     job.setNumReduceTasks(Params.clusterSize);
+    job.setMapOutputKeyClass(classOf[StringArrayWritable]);
+    job.setMapOutputValueClass(classOf[Text]);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[NullWritable]);
     FileInputFormat.addInputPath(job, path("output/tran_part_raw"))
@@ -94,6 +105,7 @@ object Evaluate extends App {
     job.setNumReduceTasks(Params.clusterSize);
     job.setMapOutputKeyClass(classOf[StringArrayWritable]);
     job.setMapOutputValueClass(classOf[StringArrayWritable]);
+
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[Text]);
 
@@ -112,6 +124,9 @@ object Evaluate extends App {
     job.setMapperClass(classOf[DistinctMapper]);
     job.setReducerClass(classOf[DistinctReducer]);
     job.setNumReduceTasks(Params.clusterSize);
+
+    job.setMapOutputKeyClass(classOf[StringArrayWritable]);
+    job.setMapOutputValueClass(classOf[Text]);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[NullWritable]);
     FileInputFormat.addInputPath(job, path("output/tran_part_detail_raw"))
@@ -134,6 +149,22 @@ object Evaluate extends App {
     return job;
   }
 
+  def tpCountHistoJob(conf: Configuration): Job = {
+    conf.set(CounterParam.KEY_INDEX, "1")
+    var job = Job.getInstance(conf, "Transaction Partition Count Histo");
+    job.setJarByClass(Evaluate.getClass);
+    job.setMapperClass(classOf[CounterMapper]);
+    job.setReducerClass(classOf[CounterReducer]);
+    job.setNumReduceTasks(Params.clusterSize);
+    job.setMapOutputKeyClass(classOf[Text]);
+    job.setMapOutputValueClass(classOf[IntWritable]);
+    job.setOutputKeyClass(classOf[Text]);
+    job.setOutputValueClass(classOf[IntWritable]);
+    FileInputFormat.addInputPath(job, path("output/tran_sum"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_sum_histo"))
+    return job;
+  }
+
   def tpMoveSizeJob(conf: Configuration): Job = {
     var job = Job.getInstance(conf, "Transaction Partition Move Sizer");
     job.setJarByClass(Evaluate.getClass);
@@ -145,7 +176,23 @@ object Evaluate extends App {
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[IntWritable]);
     FileInputFormat.addInputPath(job, path("output/tran_part_detail"))
-    FileOutputFormat.setOutputPath(job, path("output/tran_move_size"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_movesize"))
+    return job;
+  }
+  
+  def tpMoveSizeHistoJob(conf: Configuration): Job = {
+    conf.set(CounterParam.KEY_INDEX, "1")
+    var job = Job.getInstance(conf, "Transaction Partition Move Size Histo");
+    job.setJarByClass(Evaluate.getClass);
+    job.setMapperClass(classOf[CounterMapper]);
+    job.setReducerClass(classOf[CounterReducer]);
+    job.setNumReduceTasks(Params.clusterSize);
+    job.setMapOutputKeyClass(classOf[Text]);
+    job.setMapOutputValueClass(classOf[IntWritable]);
+    job.setOutputKeyClass(classOf[Text]);
+    job.setOutputValueClass(classOf[IntWritable]);
+    FileInputFormat.addInputPath(job, path("output/tran_movesize"))
+    FileOutputFormat.setOutputPath(job, path("output/tran_movesize_histo"))
     return job;
   }
 

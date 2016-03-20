@@ -56,9 +56,8 @@ class TPCountReducer extends Reducer[StringArrayWritable, StringArrayWritable, T
     var tid = key.get()(0).asInstanceOf[Text]
     var sum = 0
     vals.foreach(value => { sum += 1 });
-    if (sum > 1) {
-      context.write(tid, new IntWritable(sum))
-    }
+    context.write(tid, new IntWritable(sum))
+
   }
 }
 

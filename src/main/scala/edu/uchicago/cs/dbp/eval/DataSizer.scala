@@ -8,4 +8,8 @@ trait DataSizer {
 
 }
 
-class DefaultDataSizer extends DataSizer;
+class DefaultDataSizer extends DataSizer {
+  override def size(dataType:String): Int = {
+    return 1;
+  }
+}
