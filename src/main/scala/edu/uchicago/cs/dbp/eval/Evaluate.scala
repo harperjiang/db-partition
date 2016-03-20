@@ -24,10 +24,11 @@ import edu.uchicago.cs.dbp.common.types.StringArrayWritable
 import edu.uchicago.cs.dbp.common.CounterParam
 import edu.uchicago.cs.dbp.common.CounterReducer
 import edu.uchicago.cs.dbp.common.CounterMapper
+import edu.uchicago.cs.dbp.eval.BaseFolder.path
 
 object Evaluate extends App {
 
-  var basefolder = "data/greedy1"
+  
 
   var conf = new Configuration()
 
@@ -196,7 +197,4 @@ object Evaluate extends App {
     return job;
   }
 
-  def path(sub: String): Path = {
-    return new Path("%s/%s".format(basefolder, sub))
-  }
 }
