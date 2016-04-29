@@ -15,8 +15,8 @@ import edu.clarkson.cs.itop.core.model.Link
 object ITConverter extends App {
 
   var parser = new Parser();
-  var output = new PrintWriter(new FileOutputStream(""));
-  Source.fromFile("").getLines().foreach { line =>
+  var output = new PrintWriter(new FileOutputStream("/home/harper/working/link_node"));
+  Source.fromFile("/home/harper/caida_data/topo-data.caida.org/ITDK/ITDK-2014-04/kapar-midar-iff.links").getLines().foreach { line =>
     {
       if (!line.startsWith("#")) {
         var link = parser.parse[Link](line);
