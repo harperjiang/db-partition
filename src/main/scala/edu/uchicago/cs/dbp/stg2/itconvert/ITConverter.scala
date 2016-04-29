@@ -57,6 +57,47 @@ object ITConverter extends App {
     FileOutputFormat.setOutputPath(job, new Path("/home/harper/working/link_link"));
     job.waitForCompletion(true)
   }
+
+  def matchlink() = {
+    var conf = new Configuration();
+    var job = Job.getInstance(conf, "Match Link");
+    job.setJarByClass(ITConverter.getClass);
+    job.setMapperClass(classOf[LinkPairReadMapper]);
+    job.setReducerClass(classOf[LinkPairReadReducer]);
+    job.setNumReduceTasks(1);
+    job.setMapOutputKeyClass(classOf[IntWritable]);
+    job.setMapOutputValueClass(classOf[IntArrayWritable]);
+    job.setOutputKeyClass(classOf[Text]);
+    job.setOutputValueClass(classOf[Text]);
+
+    FileInputFormat.addInputPath(job, new Path("/home/harper/working/link_link"))
+    FileOutputFormat.setOutputPath(job, new Path("/home/harper/working/link_size_adj_weight"));
+    job.waitForCompletion(true)
+  }
+
+  def renameline() = {
+    var mapper = new scala.collection.mutable.HashMap[Int, Int]();
+    var counter = 0;
+    var output = new PrintWriter(new FileOutputStream("/home/harper/working/final"));
+    Source.fromFile("/home/harper/working/link_size_adj_weight/part-r-00000").getLines().foreach {
+      line =>
+        {
+          var values = line.split("\\s").map(_.toInt);
+          var newid = counter;
+          counter += 1;
+
+          mapper += (values(0) -> newid);
+          values(0) = newid;
+          for (i <- 2 until values.length by 2) {
+            if(mapper.contains(values(i))) {
+               values(i) = mapper.get(values(i)).get;
+            }
+          }
+          output.println(values.mkString("\t"));
+        }
+    }
+    output.close();
+  }
 }
 
 class LinkReadMapper extends Mapper[Object, Text, IntWritable, IntArrayWritable] {
@@ -102,20 +143,31 @@ class LinkReadReducer extends Reducer[IntWritable, IntArrayWritable, Text, IntWr
   }
 }
 
-class LinkPairReadMapper extends Mapper[Object, Text, IntWritable, IntWritable] {
+class LinkPairReadMapper extends Mapper[Object, Text, IntArrayWritable, IntWritable] {
 
   override def map(key: Object, value: Text,
-    context: Mapper[Object, Text, IntWritable, IntWritable]#Context) = {
+    context: Mapper[Object, Text, IntArrayWritable, IntWritable]#Context) = {
     var values = value.toString().split("\\s");
-    context.write(new IntWritable(values(0).toInt), new IntWritable(values(1).toInt));
+    context.write(new IntArrayWritable(Array(values(0), values(1))), new IntWritable(values(2).toInt));
   }
 }
 
-class LinkPairReadReducer extends Reducer[IntWritable, IntWritable, IntWritable, Text] {
+class LinkPairReadReducer extends Reducer[IntArrayWritable, IntWritable, Text, Text] {
 
-  override def reduce(key: IntWritable, values: java.lang.Iterable[IntWritable],
-    context: Reducer[IntWritable, IntWritable, IntWritable, Text]#Context) = {
-    var from = key;
+  override def reduce(key: IntArrayWritable, values: java.lang.Iterable[IntWritable],
+    context: Reducer[IntArrayWritable, IntWritable, Text, Text]#Context) = {
+    var srcid = key.get()(0).toString().toInt;
+    var srcsize = key.get()(1).toString().toInt;
 
+    var map = new scala.collection.mutable.HashMap[Int, Int]();
+
+    values.foreach { to =>
+      {
+        map.put(to.get, map.getOrElseUpdate(to.get, 0) + 1);
+      }
+    };
+
+    context.write(new Text("%d\t%d".format(srcid, srcsize)),
+      new Text(map.map(kv => "%d\t%d".format(kv._1, kv._2)).mkString("\t")));
   }
 }
