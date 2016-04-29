@@ -12,6 +12,14 @@ public class IntArrayWritable extends ArrayWritable implements
 		super(IntWritable.class);
 	}
 
+	public IntArrayWritable(int[] data) {
+		this();
+		Writable[] ints = new Writable[data.length];
+		for (int i = 0; i < ints.length; i++)
+			ints[i] = new IntWritable(data[i]);
+		set(ints);
+	}
+
 	public IntArrayWritable(String[] data) {
 		this();
 		Writable[] ints = new Writable[data.length];

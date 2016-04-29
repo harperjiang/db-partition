@@ -57,6 +57,11 @@
 			<artifactId>scala-library</artifactId>
 			<version>${scala.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.sf.squirrel-sql.thirdparty-non-maven</groupId>
+			<artifactId>java-cup</artifactId>
+			<version>0.11a</version>
+		</dependency>
 	</dependencies>
 	<properties>
 		<scala.version>2.11.3</scala.version>
