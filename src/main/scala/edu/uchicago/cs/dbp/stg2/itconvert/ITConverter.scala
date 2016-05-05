@@ -26,7 +26,7 @@ import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
 object ITConverter extends App {
 
   readlink();
-  
+
   def parse() = {
     var parser = new Parser();
     var output = new PrintWriter(new FileOutputStream("/home/harper/working/link_node"));
@@ -34,7 +34,7 @@ object ITConverter extends App {
       {
         if (!line.startsWith("#")) {
           var link = parser.parse[Link](line);
-          output.println(link.id + " " + link.anonymousNodeIds.mkString(" ")+" " + link.namedNodeIds.values.mkString(" "));
+          output.println(link.id + " " + link.anonymousNodeIds.mkString(" ") + " " + link.namedNodeIds.values.mkString(" "));
         }
       }
     };
@@ -54,7 +54,7 @@ object ITConverter extends App {
     job.setOutputValueClass(classOf[IntWritable]);
 
     FileInputFormat.addInputPath(job, new Path("/home/harper/working/link_node"))
-    FileOutputFormat.setOutputPath(job, new Path("/home/harper/working/link_link"));
+    FileOutputFormat.setOutputPath(job, new Path("/home/harper/working/link_link_size"));
     job.waitForCompletion(true)
   }
 
@@ -82,15 +82,15 @@ object ITConverter extends App {
     Source.fromFile("/home/harper/working/link_size_adj_weight/part-r-00000").getLines().foreach {
       line =>
         {
-          var values = line.split("\\s").map(_.toInt);
+          var values = line.split("\\s+").map(_.toInt);
           var newid = counter;
           counter += 1;
 
           mapper += (values(0) -> newid);
           values(0) = newid;
           for (i <- 2 until values.length by 2) {
-            if(mapper.contains(values(i))) {
-               values(i) = mapper.get(values(i)).get;
+            if (mapper.contains(values(i))) {
+              values(i) = mapper.get(values(i)).get;
             }
           }
           output.println(values.mkString("\t"));
@@ -107,10 +107,9 @@ class LinkReadMapper extends Mapper[Object, Text, IntWritable, IntArrayWritable]
     var values = value.toString().split("\\s+");
     var link = values(0).toInt;
     var nodes = values.slice(1, values.length);
-
+    var array = Array(link, (values.length - 1));
     nodes.foreach { n =>
       {
-        var array = Array(link.toString, (values.length - 1).toString);
         context.write(new IntWritable(n.toInt),
           new IntArrayWritable(array))
       }
@@ -122,15 +121,19 @@ class LinkReadReducer extends Reducer[IntWritable, IntArrayWritable, Text, IntWr
 
   override def reduce(key: IntWritable, values: java.lang.Iterable[IntArrayWritable],
     context: Reducer[IntWritable, IntArrayWritable, Text, IntWritable]#Context) = {
-    var list = values.toList;
+    
+    context.write(new Text(key.get.toString), new IntWritable(values.size));
+/*
+    var list = new scala.collection.mutable.ArrayBuffer[Array[Int]]();
+    values.foreach(value => { list += value.get.map { _.toString.toInt } });
     for (i <- 0 to list.length - 1) {
       for (j <- i + 1 to list.length - 1) {
         var linki = list(i);
         var linkj = list(j);
-        var idi = linki.get()(0).toString.toInt;
-        var idj = linkj.get()(0).toString.toInt;
-        var sizei = linki.get()(1).toString.toInt;
-        var sizej = linkj.get()(1).toString.toInt;
+        var idi = linki(0).toInt;
+        var idj = linkj(0).toInt;
+        var sizei = linki(1).toInt;
+        var sizej = linkj(1).toInt;
 
         if (idi < idj) {
           context.write(new Text("%d\t%d".format(idi, sizei)), new IntWritable(idj));
@@ -139,7 +142,7 @@ class LinkReadReducer extends Reducer[IntWritable, IntArrayWritable, Text, IntWr
           context.write(new Text("%d\t%d".format(idj, sizej)), new IntWritable(idi));
         }
       }
-    }
+    }*/
   }
 }
 

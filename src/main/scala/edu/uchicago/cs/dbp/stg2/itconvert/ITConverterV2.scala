@@ -25,6 +25,8 @@ import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
 
 object ITConverterV2 extends App {
 
+  readlink();
+  
   def readlink() = {
     var conf = new Configuration();
     var job = Job.getInstance(conf, "Read Link");
@@ -66,7 +68,7 @@ object ITConverterV2 extends App {
     Source.fromFile("/home/harper/working/link_size_adj_weight/part-r-00000").getLines().foreach {
       line =>
         {
-          var values = line.split("\\s").map(_.toInt);
+          var values = line.split("\\s+").map(_.toInt);
           var newid = counter;
           counter += 1;
 
@@ -88,7 +90,7 @@ class LinkReadV2Mapper extends Mapper[Object, Text, IntWritable, IntArrayWritabl
 
   override def map(key: Object, value: Text,
     context: Mapper[Object, Text, IntWritable, IntArrayWritable]#Context) = {
-    var values = value.toString().split("\\s");
+    var values = value.toString().split("\\s+");
     var link = values(0).toInt;
     var nodes = values.slice(1, values.length);
 
