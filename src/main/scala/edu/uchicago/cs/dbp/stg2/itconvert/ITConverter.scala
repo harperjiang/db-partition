@@ -25,7 +25,7 @@ import edu.uchicago.cs.dbp.common.types.KeyPartitioner.Key2Partitioner
 
 object ITConverter extends App {
 
-  readlink();
+  mergelink2();
 
   def parse() = {
     var parser = new Parser();
@@ -65,35 +65,93 @@ object ITConverter extends App {
     job.setMapperClass(classOf[LinkPairReadMapper]);
     job.setReducerClass(classOf[LinkPairReadReducer]);
     job.setNumReduceTasks(1);
-    job.setMapOutputKeyClass(classOf[IntWritable]);
+    job.setMapOutputKeyClass(classOf[IntArrayWritable]);
+    job.setMapOutputValueClass(classOf[IntWritable]);
+    job.setOutputKeyClass(classOf[Text]);
+    job.setOutputValueClass(classOf[Text]);
+
+    FileInputFormat.addInputPath(job, new Path("/home/harper/storage/workingbig/link_link"))
+    FileOutputFormat.setOutputPath(job, new Path("/home/harper/storage/workingbig/edge_weight"));
+    job.waitForCompletion(true)
+  }
+
+  def mergelink() = {
+    var conf = new Configuration();
+    var job = Job.getInstance(conf, "Merge Link");
+    job.setJarByClass(ITConverter.getClass);
+    job.setMapperClass(classOf[MergeMapper]);
+    job.setReducerClass(classOf[MergeReducer]);
+    job.setNumReduceTasks(1);
+    job.setMapOutputKeyClass(classOf[IntArrayWritable]);
     job.setMapOutputValueClass(classOf[IntArrayWritable]);
     job.setOutputKeyClass(classOf[Text]);
     job.setOutputValueClass(classOf[Text]);
 
-    FileInputFormat.addInputPath(job, new Path("/home/harper/working/link_link"))
-    FileOutputFormat.setOutputPath(job, new Path("/home/harper/working/link_size_adj_weight"));
+    FileInputFormat.addInputPath(job, new Path("/home/harper/storage/workingbig/edge_weight"))
+    FileOutputFormat.setOutputPath(job, new Path("/home/harper/storage/workingbig/edge_merge"));
     job.waitForCompletion(true)
   }
 
+  def mergelink2() = {
+    var inputfile = "/home/harper/storage/workingbig/edge_merge/part-r-00000";
+    var previd: Int = -1;
+    var outputfile = "/home/harper/storage/workingbig/merged";
+    var pw = new PrintWriter(new FileOutputStream(outputfile));
+    Source.fromFile(inputfile).getLines().foreach {
+      line =>
+        {
+          var split = line.split("\\s+").map(_.toInt);
+          var curid = split(0);
+          if (previd == -1) {
+            previd = curid;
+            pw.print("%d\t%d\t".format(split(0), split(1)));
+          } else if (previd != curid) {
+            previd = curid;
+            pw.println();
+            pw.print("%d\t%d\t".format(split(0), split(1)));
+          } else {
+            pw.print("%d\t%d\t".format(split(2), split(3)));
+          }
+        }
+    }
+    pw.close();
+  }
+
   def renameline() = {
+    var inputFile = "/home/harper/storage/workingbig/edge_weight/part-r-00000";
     var mapper = new scala.collection.mutable.HashMap[Int, Int]();
     var counter = 0;
-    var output = new PrintWriter(new FileOutputStream("/home/harper/working/final"));
-    Source.fromFile("/home/harper/working/link_size_adj_weight/part-r-00000").getLines().foreach {
+    var output = new PrintWriter(new FileOutputStream("/home/harper/storage/workingbig/final"));
+    var mappingfile = new PrintWriter(new FileOutputStream("/home/harper/storage/workingbig/mapping"));
+    // Two pass, the first pass build mapping table, the second pass rewrite line
+    // Input : src_id, src_weight, [dest_id, edge_weight]+
+    // Output: src_weight(src_id is the num of line), [dest_id, edge_weight]+
+    Source.fromFile(inputFile).getLines().foreach {
+      line =>
+        {
+          var parts = line.split("\\s+");
+          counter = counter + 1;
+          mapper += (parts(0).toInt -> counter);
+          mappingfile.println("%d\t%d".format(counter, parts(0).toInt));
+        }
+    };
+    mappingfile.close();
+
+    var sbf = new StringBuilder();
+    Source.fromFile(inputFile).getLines().foreach {
       line =>
         {
           var values = line.split("\\s+").map(_.toInt);
-          var newid = counter;
-          counter += 1;
-
-          mapper += (values(0) -> newid);
-          values(0) = newid;
+          sbf.clear();
+          // Node weight
+          sbf.append(values(1)).append("\t");
           for (i <- 2 until values.length by 2) {
-            if (mapper.contains(values(i))) {
-              values(i) = mapper.get(values(i)).get;
-            }
+            sbf.append(
+              mapper.getOrElse(values(i),
+                { throw new RuntimeException("Unrecognized node:%d".format(values(i))); })).append("\t");
+            sbf.append(values(i + 1)).append("\t");
           }
-          output.println(values.mkString("\t"));
+          output.println(sbf.toString());
         }
     }
     output.close();
@@ -121,9 +179,9 @@ class LinkReadReducer extends Reducer[IntWritable, IntArrayWritable, Text, IntWr
 
   override def reduce(key: IntWritable, values: java.lang.Iterable[IntArrayWritable],
     context: Reducer[IntWritable, IntArrayWritable, Text, IntWritable]#Context) = {
-    
-    context.write(new Text(key.get.toString), new IntWritable(values.size));
-/*
+
+    //context.write(new Text(key.get.toString), new IntWritable(values.size));
+
     var list = new scala.collection.mutable.ArrayBuffer[Array[Int]]();
     values.foreach(value => { list += value.get.map { _.toString.toInt } });
     for (i <- 0 to list.length - 1) {
@@ -142,7 +200,7 @@ class LinkReadReducer extends Reducer[IntWritable, IntArrayWritable, Text, IntWr
           context.write(new Text("%d\t%d".format(idj, sizej)), new IntWritable(idi));
         }
       }
-    }*/
+    }
   }
 }
 
@@ -150,8 +208,9 @@ class LinkPairReadMapper extends Mapper[Object, Text, IntArrayWritable, IntWrita
 
   override def map(key: Object, value: Text,
     context: Mapper[Object, Text, IntArrayWritable, IntWritable]#Context) = {
-    var values = value.toString().split("\\s");
-    context.write(new IntArrayWritable(Array(values(0), values(1))), new IntWritable(values(2).toInt));
+    var values = value.toString().split("\\s+");
+    // Input: src src_size weight dest dest_size 
+    context.write(new IntArrayWritable(Array(values(0), values(1), values(3), values(4))), new IntWritable(values(2).toInt));
   }
 }
 
@@ -159,18 +218,33 @@ class LinkPairReadReducer extends Reducer[IntArrayWritable, IntWritable, Text, T
 
   override def reduce(key: IntArrayWritable, values: java.lang.Iterable[IntWritable],
     context: Reducer[IntArrayWritable, IntWritable, Text, Text]#Context) = {
-    var srcid = key.get()(0).toString().toInt;
-    var srcsize = key.get()(1).toString().toInt;
 
-    var map = new scala.collection.mutable.HashMap[Int, Int]();
+    var sum = 0
+    values.foreach { sum += _.get };
 
-    values.foreach { to =>
-      {
-        map.put(to.get, map.getOrElseUpdate(to.get, 0) + 1);
-      }
-    };
+    context.write(new Text(key.get.map { _.toString }.mkString("\t")),
+      new Text("%d".format(sum)));
+  }
+}
 
-    context.write(new Text("%d\t%d".format(srcid, srcsize)),
-      new Text(map.map(kv => "%d\t%d".format(kv._1, kv._2)).mkString("\t")));
+class MergeMapper extends Mapper[Object, Text, IntArrayWritable, IntArrayWritable] {
+  // Input: src src_size weight dest dest_size 
+  override def map(key: Object, value: Text, context: Mapper[Object, Text, IntArrayWritable, IntArrayWritable]#Context) = {
+    var values = value.toString.split("\\s+").map(_.toInt);
+    context.write(new IntArrayWritable(Array(values(0), values(1))), new IntArrayWritable(Array(values(3), values(2))));
+    context.write(new IntArrayWritable(Array(values(3), values(4))), new IntArrayWritable(Array(values(0), values(2))));
+  }
+}
+
+class MergeReducer extends Reducer[IntArrayWritable, IntArrayWritable, Text, Text] {
+  // Input : key : src, src weight,  values: dest, edge weight
+  override def reduce(key: IntArrayWritable, values: java.lang.Iterable[IntArrayWritable],
+    context: Reducer[IntArrayWritable, IntArrayWritable, Text, Text]#Context) = {
+
+    values.foreach(value => {
+      // dest_id, edge_weight
+      var intval = value.get.map(_.toString.toInt);
+      context.write(new Text(key.get.map(_.toString).mkString("\t")), new Text(intval.mkString("\t")));
+    });
   }
 }
