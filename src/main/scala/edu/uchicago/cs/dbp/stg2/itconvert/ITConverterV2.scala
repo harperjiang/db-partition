@@ -26,7 +26,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object ITConverterV2 extends App {
 
-  readlink();
+  countedge();
 
   def readlink() = {
     var conf = new Configuration();
@@ -85,9 +85,32 @@ object ITConverterV2 extends App {
     }
     output.close();
   }
+  
+  def countedge() = {
+    var mapper = new scala.collection.mutable.HashSet[(Int, Int)]();
+    var counter = 1;
+    Source.fromFile("/home/harper/storage/workingbig/v2/final").getLines().foreach {
+      line =>
+        {
+          var values = line.split("\\s+").map(_.toInt);
+          for (i <- 1 until values.length by 2) {
+            var a = counter;
+            var b = values(i);
+            if (a <= b) {
+              mapper += ((a, b));
+            } else {
+              mapper += ((b, a));
+            }
+          }
+        }
+    }
+
+    // 56020598
+    System.out.println(mapper.size);
+  }
 }
 
-class LinkReadV2Mapper extends Mapper[Object, Text, IntWritable, IntArrayWritable] {
+class LinkReadV2XMapper extends Mapper[Object, Text, IntWritable, IntArrayWritable] {
 
   override def map(key: Object, value: Text,
     context: Mapper[Object, Text, IntWritable, IntArrayWritable]#Context) = {
@@ -105,7 +128,7 @@ class LinkReadV2Mapper extends Mapper[Object, Text, IntWritable, IntArrayWritabl
   }
 }
 
-class LinkReadV2Reducer extends Reducer[IntWritable, IntArrayWritable, Text, Text] {
+class LinkReadV2XReducer extends Reducer[IntWritable, IntArrayWritable, Text, Text] {
 
   val threshold = 1000;
 
