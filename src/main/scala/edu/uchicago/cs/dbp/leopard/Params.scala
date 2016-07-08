@@ -1,18 +1,36 @@
 package edu.uchicago.cs.dbp.leopard
 
+import scala.collection.mutable.Stack
 object Params {
   // The weight of partition size when calculating scores
-  final var wSize = 0.5;
+  var wSize = 1d;
 
-  final var eSize = 0.2;
+  var eSize = 3d;
 
-  final var rescanProb = 0.5;
+  var rescanProb = 0.5d;
 
-  final var rescanThreshold = 0.5;
+  var rescanThreshold = 0.5d;
 
-  final var minReplica = 2;
+  var minReplica = 2d;
 
-  final var avgReplica = 3.5f;
+  var avgReplica = 3.5d;
 
-  final var windowSize = 20;
+  var windowSize = 20d;
+
+  private var stack = new Stack[(Double, Double, Double, Double, Double, Double, Double)]();
+
+  def save(): Unit = {
+    stack.push((wSize, eSize, rescanProb, rescanThreshold, minReplica, avgReplica, windowSize));
+  }
+
+  def load(): Unit = {
+    var s = stack.pop();
+    wSize = s._1;
+    eSize = s._2;
+    rescanProb = s._3;
+    rescanThreshold = s._4;
+    minReplica = s._5;
+    avgReplica = s._6;
+    windowSize = s._7;
+  }
 }

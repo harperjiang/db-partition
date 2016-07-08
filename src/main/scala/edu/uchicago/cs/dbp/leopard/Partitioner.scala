@@ -9,14 +9,15 @@ import scala.collection.mutable.ListBuffer
 import edu.uchicago.cs.dbp.leopard.model.Edge
 import edu.uchicago.cs.dbp.leopard.model.Partition
 import edu.uchicago.cs.dbp.leopard.model.Vertex
+import scala.util.Random
 
 class Partitioner(numPartition: Int) {
 
   private var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
 
-  private var scorer = new Scorer();
-
   private var slidingWindow = new ListBuffer[Double]();
+  
+  private var random = new Random(System.currentTimeMillis());
 
   for (i <- 0 until numPartition) {
     partitions += new Partition(i);
@@ -32,22 +33,26 @@ class Partitioner(numPartition: Int) {
           if (v.primary == -1) { // Not assigned
             assign(v);
           } else {
-            reassignCandidates += v;
+            reassignCandidates += v; // Already assigned, check for reassignment
           }
         }
     }
     // Trigger reassignment
     while (!reassignCandidates.isEmpty) {
       var v = reassignCandidates.iterator.next();
-      var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
+      reassignCandidates.remove(v);
+      if (v.numNeighbors != 0) {
+        var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
 
-      if (probReassign > Params.rescanThreshold) {
-        if (assign(v)) { // This vertex is reassigned, add all its immediate neighbors
-          reassignCandidates ++= v.neighbors;
+        var rand = random.nextDouble();
+        
+        if (rand <= probReassign) {
+          if (assign(v)) { // This vertex is reassigned, add all its immediate neighbors
+            reassignCandidates ++= v.neighbors;
+          }
         }
       }
     }
-
   }
 
   /**
@@ -65,11 +70,7 @@ class Partitioner(numPartition: Int) {
 
     var pMax = pScores.zipWithIndex.maxBy(_._1);
 
-    // Primary Partition
-    partitions(pMax._2).addPrimary(v);
-
     // Secondary Partition
-
     var sScores = v.numSecondaryNeighbors(numPartition);
 
     for (i <- 0 until numPartition) {
@@ -78,10 +79,12 @@ class Partitioner(numPartition: Int) {
     }
 
     var secSet = new HashSet[Int]();
-    var sorted = sScores.zipWithIndex.sortBy(_._1)(Ordering[Double].reverse);
+
+    var remain = sScores.zipWithIndex.filter(_._2 != pMax._2);
+    var sorted = remain.sortBy(_._1)(Ordering[Double].reverse);
 
     // Add the first min - 1 copies to the secondary set
-    sorted.dropRight(numPartition - Params.minReplica + 1).map(secSet += _._2);
+    sorted.dropRight((numPartition - Params.minReplica).toInt).foreach(secSet += _._2);
 
     // Compute the average set
     while (slidingWindow.size >= Params.windowSize - numPartition) {
@@ -89,15 +92,18 @@ class Partitioner(numPartition: Int) {
     }
     var buffer = new ArrayBuffer[(Double, Int, Boolean)]();
     slidingWindow.foreach(o => buffer += ((o, 0, false)));
-    sScores.zipWithIndex.foreach(data => { buffer += ((data._1, data._2, true)) });
+    remain.foreach(data => { buffer += ((data._1, data._2, true)) });
 
-    var thres = ((Params.avgReplica - 1) / (numPartition - 1)).toInt;
+    var thres = (((Params.avgReplica - 1) * buffer.size / (numPartition - 1))).toInt;
 
     buffer.sortBy(_._1)(Ordering[Double].reverse).dropRight(buffer.size - thres).foreach(f => { if (f._3) secSet += f._2 });
 
+    partitions(pMax._2).addPrimary(v);
     secSet.foreach { partitions(_).addSecondary(v) }
 
-    return v.primary != oldAssign;
+    slidingWindow ++= remain.map(_._1);
+
+    return oldAssign != -1 && v.primary != oldAssign;
   }
 
 }

@@ -4,20 +4,17 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
-class Vertex {
+class Vertex extends Equals {
   var id: Int = 0;
 
   private var assignTo: Int = -1;
 
   private var secondary = new HashSet[Int]();
 
-  var scanned: Int = 0;
-
   var adj = new HashSet[Vertex]();
 
   def assign(p: Int): Unit = {
     this.assignTo = p;
-    adj.foreach { _.scanned += 1 };
   }
 
   def addSecondary(p: Int): Unit = {
@@ -58,6 +55,22 @@ class Vertex {
   def attach(vs: Iterable[Vertex]) = {
     adj ++= vs;
     adj.remove(this);
+  }
+
+  def canEqual(other: Any) = {
+    other.isInstanceOf[edu.uchicago.cs.dbp.leopard.model.Vertex]
+  }
+
+  override def equals(other: Any) = {
+    other match {
+      case that: Vertex => this.id == other.asInstanceOf[Vertex].id
+      case _ => false
+    }
+  }
+
+  override def hashCode() = {
+    val prime = 41
+    prime * 13 + id.hashCode()
   }
 
 }
