@@ -7,6 +7,11 @@ import scala.collection.mutable.Buffer
 class Vertex extends Equals {
   var id: Int = 0;
 
+  def this(vid: Int) = {
+    this();
+    id = vid;
+  }
+
   private var assignTo: Int = -1;
 
   private var secondary = new HashSet[Int]();
@@ -19,6 +24,10 @@ class Vertex extends Equals {
 
   def addSecondary(p: Int): Unit = {
     this.secondary += p;
+  }
+
+  def removeSecondary(p: Int): Unit = {
+    this.secondary -= p;
   }
 
   def replicas = secondary;

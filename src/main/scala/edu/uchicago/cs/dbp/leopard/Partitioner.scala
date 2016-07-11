@@ -13,10 +13,10 @@ import scala.util.Random
 
 class Partitioner(numPartition: Int) {
 
-  private var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
+  var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
 
   private var slidingWindow = new ListBuffer[Double]();
-  
+
   private var random = new Random(System.currentTimeMillis());
 
   for (i <- 0 until numPartition) {
@@ -45,7 +45,7 @@ class Partitioner(numPartition: Int) {
         var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
 
         var rand = random.nextDouble();
-        
+
         if (rand <= probReassign) {
           if (assign(v)) { // This vertex is reassigned, add all its immediate neighbors
             reassignCandidates ++= v.neighbors;
@@ -60,6 +60,10 @@ class Partitioner(numPartition: Int) {
    */
   def assign(v: Vertex): Boolean = {
     var oldAssign = v.primary;
+    if (oldAssign != -1) {
+      partitions(v.primary).removePrimary(v);
+      v.replicas.foreach(partitions(_).removeSecondary(v));
+    }
     // Compute Score of v for each partition
     var pScores = v.numPrimaryNeighbors(numPartition);
 
@@ -71,37 +75,40 @@ class Partitioner(numPartition: Int) {
     var pMax = pScores.zipWithIndex.maxBy(_._1);
 
     // Secondary Partition
-    var sScores = v.numSecondaryNeighbors(numPartition);
+    if (Params.avgReplica > Params.minReplica) {
+      var sScores = v.numSecondaryNeighbors(numPartition);
 
-    for (i <- 0 until numPartition) {
-      var p = partitions(i);
-      sScores(i) = sScores(i) - Params.wSize * Params.eSize * Math.pow(p.size, Params.eSize - 1) / 2;
+      for (i <- 0 until numPartition) {
+        var p = partitions(i);
+        sScores(i) = sScores(i) - Params.wSize * Params.eSize * Math.pow(p.size, Params.eSize - 1) / 2;
+      }
+
+      var secSet = new HashSet[Int]();
+
+      var remain = sScores.zipWithIndex.filter(_._2 != pMax._2);
+      var sorted = remain.sortBy(_._1)(Ordering[Double].reverse);
+
+      // Add the first min - 1 copies to the secondary set
+      sorted.dropRight((numPartition - Params.minReplica).toInt).foreach(secSet += _._2);
+
+      // Compute the average set
+      while (slidingWindow.size >= Params.windowSize - numPartition) {
+        slidingWindow.remove(0);
+      }
+      var buffer = new ArrayBuffer[(Double, Int, Boolean)]();
+      slidingWindow.foreach(o => buffer += ((o, 0, false)));
+      remain.foreach(data => { buffer += ((data._1, data._2, true)) });
+
+      var thres = (((Params.avgReplica - 1) * buffer.size / (numPartition - 1))).toInt;
+
+      buffer.sortBy(_._1)(Ordering[Double].reverse).dropRight(buffer.size - thres).foreach(f => { if (f._3) secSet += f._2 });
+
+      slidingWindow ++= remain.map(_._1);
+
+      secSet.foreach { partitions(_).addSecondary(v) }
     }
-
-    var secSet = new HashSet[Int]();
-
-    var remain = sScores.zipWithIndex.filter(_._2 != pMax._2);
-    var sorted = remain.sortBy(_._1)(Ordering[Double].reverse);
-
-    // Add the first min - 1 copies to the secondary set
-    sorted.dropRight((numPartition - Params.minReplica).toInt).foreach(secSet += _._2);
-
-    // Compute the average set
-    while (slidingWindow.size >= Params.windowSize - numPartition) {
-      slidingWindow.remove(0);
-    }
-    var buffer = new ArrayBuffer[(Double, Int, Boolean)]();
-    slidingWindow.foreach(o => buffer += ((o, 0, false)));
-    remain.foreach(data => { buffer += ((data._1, data._2, true)) });
-
-    var thres = (((Params.avgReplica - 1) * buffer.size / (numPartition - 1))).toInt;
-
-    buffer.sortBy(_._1)(Ordering[Double].reverse).dropRight(buffer.size - thres).foreach(f => { if (f._3) secSet += f._2 });
 
     partitions(pMax._2).addPrimary(v);
-    secSet.foreach { partitions(_).addSecondary(v) }
-
-    slidingWindow ++= remain.map(_._1);
 
     return oldAssign != -1 && v.primary != oldAssign;
   }

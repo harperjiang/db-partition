@@ -3,9 +3,9 @@ package edu.uchicago.cs.dbp.leopard
 import scala.collection.mutable.Stack
 object Params {
   // The weight of partition size when calculating scores
-  var wSize = 1d;
+  var wSize = 0.53d;
 
-  var eSize = 3d;
+  var eSize = 1.5d;
 
   var rescanProb = 0.5d;
 

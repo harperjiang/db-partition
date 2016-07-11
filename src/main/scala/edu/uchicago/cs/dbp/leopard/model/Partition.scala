@@ -15,8 +15,18 @@ class Partition(pid: Int) {
     v.assign(this.id);
   }
 
-  def addSecondary(v:Vertex) = {
+  def removePrimary(v: Vertex) = {
+    v.assign(-1);
+    vertices -= v;
+  }
+
+  def addSecondary(v: Vertex) = {
     vertices += v;
     v.addSecondary(this.id);
+  }
+  
+  def removeSecondary(v:Vertex) = {
+    vertices-= v;
+    v.removeSecondary(this.id);
   }
 }
