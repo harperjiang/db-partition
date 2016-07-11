@@ -15,6 +15,7 @@ object RunLeopard extends App {
   var p = new Partitioner(10);
   
   Params.eSize = 1.7;
+  Params.wSize = 0.53d;
   Params.minReplica = 1;
   Params.avgReplica = 1;
 
