@@ -6,7 +6,7 @@ import scala.io.Source
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 object MetisRunner {
-  def prepareInput(edgeFile: String, dictFile: String, minput: String) = {
+  def prepareInput(edgeFile: String, dictFile: String, minput: String): Unit = {
     var map = new HashMap[Int, scala.collection.mutable.Set[Int]]();
 
     Source.fromFile(edgeFile).getLines().filter(!_.startsWith("#")).foreach(s => {
@@ -14,11 +14,13 @@ object MetisRunner {
       var v1 = parts(0).toInt;
       var v2 = parts(1).toInt;
 
-      map.getOrElseUpdate(v1, new HashSet[Int]()) += v2;
-      map.getOrElseUpdate(v2, new HashSet[Int]()) += v1;
-
+      if (v1 != v2) {
+        map.getOrElseUpdate(v1, new HashSet[Int]()) += v2;
+        map.getOrElseUpdate(v2, new HashSet[Int]()) += v1;
+      }
     });
-
+    
+    map.foreach(f => { f._2.foreach { x => if (!map.get(x).get.contains(f._1)) throw new IllegalArgumentException("%d\t%d".format(f._1, x)) } })
     var edgeCounter = map.map(_._2.size).sum / 2;
 
     var vCount = map.size;
