@@ -1,4 +1,4 @@
-package edu.uchicago.cs.dbp.leopard.experiment.slashdot
+package edu.uchicago.cs.dbp.leopard.experiment.stanford
 
 import java.io.FileOutputStream
 import java.io.PrintWriter
@@ -12,6 +12,6 @@ import org.apache.hadoop.util.hash.Hash
 import edu.uchicago.cs.dbp.leopard.experiment.common.MetisRunner
 
 object RunMetis extends App {
-  //MetisRunner.prepareInput("leopard/slashdot/edge", "leopard/slashdot/metis_dict", "leopard/slashdot/metis_input")
-  MetisRunner.translateInput("leopard/slashdot/p_metis", "leopard/slashdot/metis_dict", "leopard/slashdot/metis_output")
+  //MetisRunner.prepareInput("leopard/stanford/edge", "leopard/stanford/metis_dict", "leopard/stanford/metis_input")
+  MetisRunner.translateInput("leopard/stanford/p_metis", "leopard/stanford/metis_dict", "leopard/stanford/metis_output")
 }

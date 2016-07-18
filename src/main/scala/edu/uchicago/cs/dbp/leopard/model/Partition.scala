@@ -2,11 +2,12 @@ package edu.uchicago.cs.dbp.leopard.model
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Buffer
+import scala.collection.mutable.HashSet
 class Partition(pid: Int) {
 
   var id = pid;
 
-  var vertices: Buffer[Vertex] = new ArrayBuffer[Vertex]();
+  var vertices: scala.collection.mutable.Set[Vertex] = new HashSet[Vertex]();
 
   def size(): Int = vertices.size;
 

@@ -19,7 +19,7 @@ object Evaluator {
       var parts = s.split("\\s+");
       var v1 = parts(0).toInt;
       var v2 = parts(1).toInt;
-      if (pmap.get(v1).get != pmap.get(v2).get) {
+      if (pmap.getOrElse(v1, v1) != pmap.getOrElse(v2, v2)) {
         counter += 1;
       }
     });

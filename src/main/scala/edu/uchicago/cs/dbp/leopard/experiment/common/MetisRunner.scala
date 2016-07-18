@@ -19,7 +19,7 @@ object MetisRunner {
         map.getOrElseUpdate(v2, new HashSet[Int]()) += v1;
       }
     });
-    
+
     map.foreach(f => { f._2.foreach { x => if (!map.get(x).get.contains(f._1)) throw new IllegalArgumentException("%d\t%d".format(f._1, x)) } })
     var edgeCounter = map.map(_._2.size).sum / 2;
 
@@ -53,6 +53,10 @@ object MetisRunner {
     dict.close();
   }
 
+  def prepareInputLarge(edgeFile: String, dictFile: String, minput: String, size: Int) = {
+
+  }
+
   def translateInput(pfile: String, dictfile: String, outfile: String): Unit = {
     var dict = new HashMap[Int, Int]();
 
@@ -64,7 +68,7 @@ object MetisRunner {
     var counter = 1;
     Source.fromFile(outfile).getLines().foreach(s => {
       var p = s.toInt;
-      out.println("%d\t%d".format(p, dict.get(counter).get));
+      out.println("%d\t%d".format(p, dict.getOrElse(counter, counter)));
       counter += 1;
     });
 
