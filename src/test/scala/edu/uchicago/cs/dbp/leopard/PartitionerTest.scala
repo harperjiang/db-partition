@@ -4,6 +4,7 @@ import org.junit.Test
 import edu.uchicago.cs.dbp.leopard.model.Vertex
 import org.junit.Assert._
 import edu.uchicago.cs.dbp.leopard.model.Edge
+import edu.uchicago.cs.dbp.leopard.Params
 
 class PartitionerTest {
 
