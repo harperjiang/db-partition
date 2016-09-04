@@ -26,10 +26,8 @@ import scala.collection.mutable.ArrayBuffer
 
 object ITConverter extends App {
 
-  val basefolder = "/home/harper/storage/workingbig/"
+  val basefolder = "/home/harper/storage/workingbig/v2/"
 
-  matchlink();
-  mergelink();
   renameline();
 
   def parse() = {

@@ -26,12 +26,11 @@ import scala.collection.mutable.ArrayBuffer
 
 object ITConverterV2 extends App {
 
-  countedge();
+  countedge2();
 
-  
   def countedge() = {
     var mapper = new scala.collection.mutable.HashSet[(Int, Int)]();
-    Source.fromFile("/home/harper/storage/workingbig/v2/edge_merge/part-r-00000").getLines().foreach {
+    Source.fromFile("/home/harper/storage/workingbig/v2/final").getLines().foreach {
       line =>
         {
           var values = line.split("\\s+").map(_.toInt);
@@ -49,4 +48,28 @@ object ITConverterV2 extends App {
 
     System.out.println(mapper.size);
   }
+
+  def countedge2() = {
+    var mapper = new scala.collection.mutable.HashSet[(Int, Int)]();
+    var counter = 1;
+    Source.fromFile("/home/harper/storage/workingbig/v2/final").getLines().foreach {
+      line =>
+        {
+          var values = line.split("\\s+").map(_.toInt);
+          for (i <- 1 until values.length by 2) {
+            var a = counter;
+            var b = values(i);
+            if (a <= b) {
+              mapper += ((a, b));
+            } else {
+              mapper += ((b, a));
+            }
+          }
+          counter+=1;
+        }
+    }
+
+    System.out.println(mapper.size);
+  }
+
 }
