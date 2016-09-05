@@ -152,6 +152,8 @@ class Partitioner(numPartition: Int) {
 
     var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
 
+    u.assign(uassign)
+    
     return u.primary != -1 && u.primary != uassign;
   }
 

@@ -47,13 +47,18 @@ class PartitionerTest {
 
     var v0 = new Vertex(0);
     var v1 = new Vertex(1);
+    var vmore = new Vertex(4);
+    var vmore2 = new Vertex(5);
     var v2 = new Vertex(2);
     var v3 = new Vertex(3);
 
     par.partitions(0).addPrimary(v0)
     par.partitions(0).addPrimary(v1)
+    par.partitions(0).addPrimary(vmore)
+    par.partitions(0).addPrimary(vmore2)
     par.partitions(1).addPrimary(v2)
 
+    v3.adj += v0
     v3.adj += v2
 
     assertTrue(!par.assign(v3))
