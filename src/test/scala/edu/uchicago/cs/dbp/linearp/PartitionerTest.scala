@@ -2,7 +2,7 @@ package edu.uchicago.cs.dbp.linearp
 
 import java.util.Random
 
-import org.junit.Assert.assertTrue
+import org.junit.Assert._
 import org.junit.Test
 
 import edu.uchicago.cs.dbp.leopard.model.Vertex
@@ -42,11 +42,23 @@ class PartitionerTest {
 
   @Test
   def testAssignVertex(): Unit = {
-    var par = new Partitioner(10);
+    // Case 1
+    var par = new Partitioner(2);
 
     var v0 = new Vertex(0);
+    var v1 = new Vertex(1);
+    var v2 = new Vertex(2);
+    var v3 = new Vertex(3);
 
-    par.assign(v0)
+    par.partitions(0).addPrimary(v0)
+    par.partitions(0).addPrimary(v1)
+    par.partitions(1).addPrimary(v2)
+
+    v3.adj += v2
+
+    assertTrue(!par.assign(v3))
+
+    assertEquals(1, v3.primary)
   }
 
   def testAssignEdge(): Unit = {
