@@ -2,9 +2,11 @@ package edu.uchicago.cs.dbp.linearp
 
 import java.util.Random
 
-import org.junit.Assert._
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
+import edu.uchicago.cs.dbp.leopard.model.Edge
 import edu.uchicago.cs.dbp.leopard.model.Vertex
 
 class PartitionerTest {
@@ -35,9 +37,10 @@ class PartitionerTest {
     }
     var psize = per.partitions.map { _.size }
     var avg = psize.sum.toDouble / psize.size
-    var esqsize = psize.map(Math.pow(_, 2)).sum / psize.size
-    var variance = esqsize - Math.pow(avg, 2)
-    assertTrue(variance < 1)
+    var max = psize.max
+    var min = psize.min
+    assertTrue(max - avg < 10)
+    assertTrue(avg - min < 10)
   }
 
   @Test
@@ -47,15 +50,13 @@ class PartitionerTest {
 
     var v0 = new Vertex(0);
     var v1 = new Vertex(1);
-    var vmore = new Vertex(4);
-    var vmore2 = new Vertex(5);
     var v2 = new Vertex(2);
     var v3 = new Vertex(3);
 
     par.partitions(0).addPrimary(v0)
     par.partitions(0).addPrimary(v1)
-    par.partitions(0).addPrimary(vmore)
-    par.partitions(0).addPrimary(vmore2)
+    for (i <- 4 to 7)
+      par.partitions(0).addPrimary(new Vertex(i))
     par.partitions(1).addPrimary(v2)
 
     v3.adj += v0
@@ -64,10 +65,53 @@ class PartitionerTest {
     assertTrue(!par.assign(v3))
 
     assertEquals(1, v3.primary)
+    // Increase the size of partition 2 and reassign
+    for (i <- 8 to 20)
+      par.partitions(1).addPrimary(new Vertex(i))
+    assertTrue(par.assign(v3))
+    assertEquals(0, v3.primary)
   }
 
+  @Test
   def testAssignEdge(): Unit = {
+    var par = new Partitioner(3);
 
+    var v0 = new Vertex(0)
+    var v1 = new Vertex(1)
+    var v2 = new Vertex(2)
+    var v3 = new Vertex(3)
+    par.partitions(0).addPrimary(v0)
+    par.partitions(0).addPrimary(v1)
+    par.partitions(0).addPrimary(v2)
+    par.partitions(0).addPrimary(v3)
+
+    var v4 = new Vertex(4)
+    var v5 = new Vertex(5)
+
+    par.partitions(1).addPrimary(v4)
+    par.partitions(1).addPrimary(v5)
+
+    var u = new Vertex(6)
+    var v = new Vertex(7)
+
+    u.adj += v0
+    u.adj += v1
+    u.adj += v2
+    u.adj += v3
+
+    v.adj += v4
+    v.adj += v5
+
+    for (i <- 8 to 30)
+      par.partitions(2).addPrimary(new Vertex(i))
+
+    var res = par.assign(new Edge(Array(u, v)))
+
+    assertEquals(0, u.primary)
+    assertEquals(1, v.primary)
   }
 
+  def testAdd(): Unit = {
+
+  }
 }

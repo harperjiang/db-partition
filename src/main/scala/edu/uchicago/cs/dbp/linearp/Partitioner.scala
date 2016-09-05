@@ -36,8 +36,8 @@ class Partitioner(numPartition: Int) {
     // Compute the assignment for the edge
     var assignment = assign(e);
     e.vertices.foreach(v => {
-      var assigned = assignment.get(v.id).get
-      if (assigned) {
+      var reassign = assignment.get(v.id).get
+      if (reassign) {
         reassignCandidates += v;
       }
     });
@@ -113,6 +113,10 @@ class Partitioner(numPartition: Int) {
 
     res += (u.id -> (u.primary != -1 && u.primary != uassign));
     res += (v.id -> (v.primary != -1 && v.primary != vassign));
+    
+    u.assign(uassign)
+    v.assign(vassign)
+    
     return res.toMap;
   }
 
@@ -152,9 +156,10 @@ class Partitioner(numPartition: Int) {
 
     var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
 
+    var oldassign = u.primary
     u.assign(uassign)
     
-    return u.primary != -1 && u.primary != uassign;
+    return oldassign != -1 && oldassign != uassign;
   }
 
   /**
