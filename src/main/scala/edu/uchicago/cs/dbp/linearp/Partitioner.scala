@@ -166,7 +166,7 @@ class Partitioner(numPartition: Int) {
     var l = new HashSet[Int];
 
     partitions.foreach(p => {
-      var prob = 1 / (1 + Math.exp(Params.sigmoidLambda * (p.size - avgSize)))
+      var prob = 1 / (1 + Math.exp(Params.sigmoidLambda * (avgSize - p.size)))
       var randval = random.nextDouble();
       if (prob >= randval) {
         l += p.id

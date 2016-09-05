@@ -25,9 +25,13 @@ class Partition(pid: Int) {
     vertices += v;
     v.addSecondary(this.id);
   }
-  
-  def removeSecondary(v:Vertex) = {
-    vertices-= v;
+
+  def removeSecondary(v: Vertex) = {
+    vertices -= v;
     v.removeSecondary(this.id);
+  }
+
+  override def toString(): String = {
+    return "%d:%d".format(id, size)
   }
 }
