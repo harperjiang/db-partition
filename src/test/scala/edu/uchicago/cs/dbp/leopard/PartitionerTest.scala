@@ -1,16 +1,16 @@
 package edu.uchicago.cs.dbp.leopard
 
 import org.junit.Test
-import edu.uchicago.cs.dbp.leopard.model.Vertex
+import edu.uchicago.cs.dbp.model.Vertex
 import org.junit.Assert._
-import edu.uchicago.cs.dbp.leopard.model.Edge
-import edu.uchicago.cs.dbp.leopard.Params
+import edu.uchicago.cs.dbp.model.Edge
+import edu.uchicago.cs.dbp.Partitioner
 
 class PartitionerTest {
 
   @Test
   def testAssign(): Unit = {
-    var per = new Partitioner(5);
+    var per = new LeopardPartitioner(5);
 
     var v1 = new Vertex();
     v1.id = 1;
@@ -48,7 +48,7 @@ class PartitionerTest {
 
   @Test
   def testAdd(): Unit = {
-    var per = new Partitioner(5);
+    var per = new LeopardPartitioner(5);
 
     var v1 = new Vertex();
     v1.id = 1;

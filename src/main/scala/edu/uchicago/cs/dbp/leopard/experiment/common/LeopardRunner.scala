@@ -6,13 +6,15 @@ import java.io.PrintWriter
 import scala.collection.mutable.HashMap
 import scala.io.Source
 
-import edu.uchicago.cs.dbp.leopard.Partitioner
+import edu.uchicago.cs.dbp.leopard.LeopardPartitioner
 import edu.uchicago.cs.dbp.leopard.eval.PartitionPrinter
-import edu.uchicago.cs.dbp.leopard.model.Edge
-import edu.uchicago.cs.dbp.leopard.model.Vertex
+import edu.uchicago.cs.dbp.model.Edge
+import edu.uchicago.cs.dbp.model.Vertex
+import edu.uchicago.cs.dbp.Partitioner
+
 object LeopardRunner {
   def run(edgeFile: String, nump: Int, outfile: String) = {
-    var p = new Partitioner(nump);
+    var p = new LeopardPartitioner(nump);
     var vertices = new HashMap[Int, Vertex]();
 
     Source.fromFile(edgeFile).getLines().filter(!_.startsWith("#")).foreach(s => {

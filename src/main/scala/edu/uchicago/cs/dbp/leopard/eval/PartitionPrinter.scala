@@ -1,7 +1,7 @@
 package edu.uchicago.cs.dbp.leopard.eval
 
 import java.io.PrintWriter
-import edu.uchicago.cs.dbp.leopard.model.Partition
+import edu.uchicago.cs.dbp.model.Partition
 
 object PartitionPrinter {
 

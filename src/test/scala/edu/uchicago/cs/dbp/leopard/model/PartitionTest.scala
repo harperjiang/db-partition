@@ -1,7 +1,10 @@
-package edu.uchicago.cs.dbp.leopard.model
+package edu.uchicago.cs.dbp.model
 
 import org.junit.Test
 import org.junit.Assert._
+
+import edu.uchicago.cs.dbp.model.Partition;
+import edu.uchicago.cs.dbp.model.Vertex;
 
 class PartitionTest {
 
