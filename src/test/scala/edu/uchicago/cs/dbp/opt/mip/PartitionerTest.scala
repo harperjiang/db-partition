@@ -7,6 +7,7 @@ import org.junit.Test
 
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Vertex
+import edu.uchicago.cs.dbp.online.opt.mip.MIPPartitioner;
 
 class PartitionerTest {
 
