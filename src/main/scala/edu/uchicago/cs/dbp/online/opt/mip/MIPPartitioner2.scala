@@ -14,8 +14,9 @@ import edu.uchicago.cs.dbp.model.Vertex
 import ilog.concert.IloIntExpr
 import ilog.concert.IloNumVar
 import ilog.cplex.IloCplex
+import ilog.concert.IloNumExpr
 
-class MIPPartitioner(numPartition: Int) extends Partitioner {
+class MIPPartitioner2(numPartition: Int) extends Partitioner {
 
   var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
 
@@ -64,7 +65,6 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
    */
   def assign(e: Edge): Map[Int, Boolean] = {
     var p = partitions.size;
-    var lset = genlset();
 
     // Remove old assignment
     e.vertices.foreach { v =>
@@ -89,30 +89,27 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
     cplex.addEq(1, cplex.scalProd(uvars, coef))
     cplex.addEq(1, cplex.scalProd(vvars, coef))
 
-    // \forall i in L, x_{ui} = x_{vi} = 0
-    lset.foreach(l => {
-      cplex.addEq(0, uvars(l))
-      cplex.addEq(0, vvars(l))
-    })
-
     // Objective function
     var u = e.vertices(0);
     var uAssignedNeighbors = u.neighbors.filter(_.primary != -1);
-    var uobjs = new Array[IloIntExpr](uAssignedNeighbors.size);
+    var uobjs = new Array[IloNumExpr](uAssignedNeighbors.size);
     uAssignedNeighbors.zipWithIndex.foreach(n => {
-      uobjs(n._2) = uvars(n._1.primary);
+      var pn = n._1.primary;
+      var p = partitions(pn)
+      uobjs(n._2) = cplex.prod(weight(p.size), uvars(n._1.primary));
     });
 
     var v = e.vertices(1);
     var vAssignedNeighbors = v.neighbors.filter(_.primary != -1);
-    var vobjs = new Array[IloIntExpr](vAssignedNeighbors.size);
+    var vobjs = new Array[IloNumExpr](vAssignedNeighbors.size);
     vAssignedNeighbors.zipWithIndex.foreach(n => {
-      vobjs(n._2) = vvars(n._1.primary);
+      var p = partitions(n._1.primary)
+      vobjs(n._2) = cplex.prod(weight(p.size), vvars(n._1.primary));
     });
 
-    var uvobjs = new Array[IloIntExpr](p);
+    var uvobjs = new Array[IloNumExpr](p);
     for (i <- 0 to p - 1) {
-      uvobjs(i) = cplex.prod(uvars(i), vvars(i))
+      uvobjs(i) = cplex.prod(weight(partitions(i).size), uvars(i), vvars(i))
     }
 
     cplex.addMaximize(cplex.sum(cplex.sum(uobjs), cplex.sum(vobjs), cplex.sum(uvobjs)));
@@ -145,7 +142,6 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
    */
   def assign(u: Vertex): Boolean = {
     var p = partitions.size;
-    var lset = genlset();
 
     // Remove old assignment
     var oldAssign = u.primary;
@@ -163,15 +159,10 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
     var coef = Array.fill[Int](p)(1);
     cplex.addEq(1, cplex.scalProd(uvars, coef))
 
-    // \forall i in L, x_{ui} = x_{vi} = 0
-    lset.foreach(l => {
-      cplex.addEq(0, uvars(l))
-    })
-
     // Objective function
-    var uobjs = new Array[IloIntExpr](u.neighbors.size);
+    var uobjs = new Array[IloNumExpr](u.neighbors.size);
     u.neighbors.zipWithIndex.foreach(n => {
-      uobjs(n._2) = uvars(n._1.primary);
+      uobjs(n._2) = cplex.prod(weight(partitions(n._1.primary).size), uvars(n._1.primary));
     });
 
     cplex.addMaximize(cplex.sum(uobjs));
@@ -192,29 +183,8 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
     return oldassign != -1 && oldassign != uassign;
   }
 
-  /**
-   * Generate the L set using sigmoid function
-   */
-  def genlset(): Set[Int] = {
-    /*
-    var max = partitions.zipWithIndex.max(Ordering.by[(Partition,Int),Int] { x => x._1.size })
-    return Set(max._2)
-    */
-    var avgSize = partitions.map(_.size).sum.toDouble / partitions.size;
-
-    var min = partitions.zipWithIndex.min(Ordering.by[(Partition, Int), Int](_._1.size))
-
-    var l = new HashSet[Int];
-
-    partitions.foreach(p => {
-      var prob = 1 / (1 + Math.exp(Params.sigmoidLambda * (avgSize - p.size)))
-      var randval = random.nextDouble();
-      if (prob >= randval) {
-        l += p.id
-      }
-    })
-
-    l.remove(min._1.id);
-    return l.toSet;
+  def weight(psize: Int): Double = {
+    return Params.alpha / (psize + Params.beta)
   }
+
 }

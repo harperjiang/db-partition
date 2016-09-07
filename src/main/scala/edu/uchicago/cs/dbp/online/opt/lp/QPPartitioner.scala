@@ -1,4 +1,4 @@
-package edu.uchicago.cs.dbp.online.opt.qp
+package edu.uchicago.cs.dbp.online.opt.lp
 
 import scala.Ordering
 import scala.collection.mutable.ArrayBuffer

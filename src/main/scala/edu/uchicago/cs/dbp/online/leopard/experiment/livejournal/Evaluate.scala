@@ -2,10 +2,10 @@ package edu.uchicago.cs.dbp.online.leopard.experiment.livejournal
 
 import scala.collection.mutable.HashMap
 import scala.io.Source
-import edu.uchicago.cs.dbp.online.leopard.experiment.common.Evaluator
+import edu.uchicago.cs.dbp.PartitionEvaluator
 object Evaluate extends App {
 
-  Evaluator.eval("leopard/livejournal/edge", "leopard/livejournal/p_leopard")
-  Evaluator.eval("leopard/livejournal/edge", "leopard/livejournal/p_metis")
+  PartitionEvaluator.eval("leopard/livejournal/edge", "leopard/livejournal/p_leopard")
+  PartitionEvaluator.eval("leopard/livejournal/edge", "leopard/livejournal/p_metis")
 
 }

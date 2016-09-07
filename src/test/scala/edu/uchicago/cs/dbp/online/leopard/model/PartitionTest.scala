@@ -1,4 +1,4 @@
-package edu.uchicago.cs.dbp.model
+package edu.uchicago.cs.dbp.online.leopard.model
 
 import org.junit.Test
 import org.junit.Assert._

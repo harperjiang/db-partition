@@ -1,8 +1,8 @@
-package edu.uchicago.cs.dbp.online.leopard.experiment.common
+package edu.uchicago.cs.dbp
 
-import scala.io.Source
 import scala.collection.mutable.HashMap
-object Evaluator {
+import scala.io.Source
+object PartitionEvaluator {
   def eval(edge: String, partition: String) = {
     var counter = 0;
     var pmap = new HashMap[Int, Int]();

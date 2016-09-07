@@ -24,7 +24,6 @@ class LeopardPartitioner(numPartition: Int) extends Partitioner {
   }
 
   def add(e: Edge): Unit = {
-    e.vertices.foreach(_.attach(e.vertices));
     var reassignCandidates = new HashSet[Vertex]();
     // First assign all unassigned vertices
     e.vertices.foreach {

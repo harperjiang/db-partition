@@ -5,7 +5,11 @@ object Params {
 
   var rescanProb = 0.5f
   
-  var sigmoidLambda = 1f;
+  var sigmoidLambda = 0.1f;
+  
+  var alpha = 5112;
+  
+  var beta = 0.5f;
 
   private var stack = new Stack[(Double)]();
 

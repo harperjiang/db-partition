@@ -1,17 +1,14 @@
 package edu.uchicago.cs.dbp.online.leopard
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
+import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Vertex
 
-import org.junit.Assert._
-
-import edu.uchicago.cs.dbp.model.Edge
-import edu.uchicago.cs.dbp.online.leopard.LeopardPartitioner;
-import edu.uchicago.cs.dbp.online.leopard.Params;
-import edu.uchicago.cs.dbp.Partitioner
-
-class PartitionerTest {
+class LeopardPartitionerTest {
 
   @Test
   def testAssign(): Unit = {

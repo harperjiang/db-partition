@@ -1,15 +1,15 @@
-package edu.uchicago.cs.dbp.opt.mip
+package edu.uchicago.cs.dbp.online.opt.mip
 
 import java.util.Random
 
-import org.junit.Assert._
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 import edu.uchicago.cs.dbp.model.Edge
-import edu.uchicago.cs.dbp.model.Vertex
-import edu.uchicago.cs.dbp.online.opt.mip.MIPPartitioner;
+import edu.uchicago.cs.dbp.model.Vertex;
 
-class PartitionerTest {
+class MIPPartitionerTest {
 
   @Test
   def testGenlset(): Unit = {
@@ -70,6 +70,8 @@ class PartitionerTest {
       par.partitions(1).addPrimary(new Vertex(i))
     assertTrue(par.assign(v3))
     assertEquals(0, v3.primary)
+    
+    assertTrue(par.partitions(0).vertices.contains(v3))
   }
 
   @Test
@@ -105,10 +107,15 @@ class PartitionerTest {
     for (i <- 8 to 30)
       par.partitions(2).addPrimary(new Vertex(i))
 
+    u.adj += v
+    v.adj += u
     var res = par.assign(new Edge(Array(u, v)))
 
     assertEquals(0, u.primary)
     assertEquals(1, v.primary)
+    
+    assertTrue(par.partitions(0).vertices.contains(u))
+    assertTrue(par.partitions(1).vertices.contains(v))
   }
 
   def testAdd(): Unit = {
