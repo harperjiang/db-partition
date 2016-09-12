@@ -21,7 +21,7 @@ object RunLeopard extends App {
 
   var vertices = new HashMap[Int,Vertex]();
   
-  Source.fromFile("leopard/wikivote/wikivote").getLines().filter(!_.startsWith("#")).foreach(s => {
+  Source.fromFile("dataset/wikivote/edge").getLines().filter(!_.startsWith("#")).foreach(s => {
     var parts = s.split("\\s+")
     var v1id = parts(0).toInt;
     var v2id = parts(1).toInt;
@@ -31,7 +31,7 @@ object RunLeopard extends App {
     p.add(new Edge(Array(v1, v2)));
   });
 
-  var out = new PrintWriter(new FileOutputStream("wikivote_leopard"));
+  var out = new PrintWriter(new FileOutputStream("dataset/wikivote/p_leopard"));
   PartitionPrinter.print(p.partitions, out)
   out.close();
 }

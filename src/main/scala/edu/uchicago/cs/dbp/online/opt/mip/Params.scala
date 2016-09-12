@@ -7,9 +7,9 @@ object Params {
   
   var sigmoidLambda = 0.1f;
   
-  var alpha = 5112;
+  var alpha = 5000f;
   
-  var beta = 0.5f;
+  var beta = 1f;
 
   private var stack = new Stack[(Double)]();
 

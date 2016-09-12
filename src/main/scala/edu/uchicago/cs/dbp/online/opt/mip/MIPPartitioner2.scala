@@ -184,7 +184,7 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
   }
 
   def weight(psize: Int): Double = {
-    return Params.alpha / (psize + Params.beta)
+    return Params.alpha / Math.pow(psize + Params.beta,2)
   }
 
 }

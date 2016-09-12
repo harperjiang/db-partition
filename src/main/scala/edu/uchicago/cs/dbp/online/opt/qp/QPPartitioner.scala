@@ -1,4 +1,4 @@
-package edu.uchicago.cs.dbp.online.opt.lp
+package edu.uchicago.cs.dbp.online.opt.qp
 
 import scala.Ordering
 import scala.collection.mutable.ArrayBuffer
@@ -15,12 +15,11 @@ import ilog.concert.IloIntExpr
 import ilog.concert.IloNumVar
 import scala.collection.mutable.HashMap
 import edu.uchicago.cs.dbp.Partitioner
+import ilog.concert.IloNumExpr
 
 class QPPartitioner(numPartition: Int) extends Partitioner {
 
   var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
-
-  private var slidingWindow = new ListBuffer[Double]();
 
   private var random = new Random(System.currentTimeMillis());
 
@@ -66,58 +65,66 @@ class QPPartitioner(numPartition: Int) extends Partitioner {
    */
   def assign(e: Edge): Map[Int, Boolean] = {
     var p = partitions.size;
-    var lset = genlset();
 
     var cplex = new IloCplex();
+    cplex.setOut(null)
 
     // Create variables for u
-    var uvars = cplex.intVarArray(p, 0, 1);
+    var uvars = cplex.numVarArray(p, 0, 1);
     // Create variables for v
-    var vvars = cplex.intVarArray(p, 0, 1);
+    var vvars = cplex.numVarArray(p, 0, 1);
 
     // \sum x_{ui} = 1, \sum x_{vi} = 1
     var coef = Array.fill[Int](p)(1);
     cplex.addEq(1, cplex.scalProd(uvars, coef))
     cplex.addEq(1, cplex.scalProd(vvars, coef))
 
-    // \forall i in L, x_{ui} = x_{vi} = 0
-    lset.foreach(l => {
-      cplex.addEq(0, uvars(l))
-      cplex.addEq(0, vvars(l))
-    })
-
     // Objective function
     var u = e.vertices(0);
-    var uobjs = new Array[IloIntExpr](u.neighbors.size);
-    u.neighbors.zipWithIndex.foreach(n => {
-      uobjs(n._2) = uvars(n._1.primary);
+    var uAssignedNeighbors = u.neighbors.filter(_.primary != -1)
+    var uobjs = new Array[IloNumExpr](uAssignedNeighbors.size);
+    uAssignedNeighbors.zipWithIndex.foreach(n => {
+      var p = partitions(n._1.primary)
+      uobjs(n._2) = cplex.prod(weight(p.size), uvars(p.id));
     });
     var v = e.vertices(1);
-    var vobjs = new Array[IloIntExpr](v.neighbors.size);
-    v.neighbors.zipWithIndex.foreach(n => {
-      vobjs(n._2) = vvars(n._1.primary);
+    var vAssignedNeighbors = v.neighbors.filter(_.primary != -1)
+    var vobjs = new Array[IloNumExpr](vAssignedNeighbors.size);
+    vAssignedNeighbors.zipWithIndex.foreach(n => {
+      var p = partitions(n._1.primary)
+      vobjs(n._2) = cplex.prod(weight(p.size), vvars(p.id));
     });
+    /*
+    var uvobjs = new Array[IloNumExpr](p);
+    for (i <- 0 to p - 1) {
+      uvobjs(i) = cplex.prod(weight(partitions(i).size), uvars(i), vvars(i))
+    }
 
+    cplex.addMaximize(cplex.sum(cplex.sum(uobjs), cplex.sum(vobjs), cplex.sum(uvobjs)));
+*/
     cplex.addMaximize(cplex.sum(cplex.sum(uobjs), cplex.sum(vobjs)));
-
+    
     if (!cplex.solve()) {
       throw new RuntimeException("LP not solvable");
     }
 
-    var ures = cplex.getValues(uvars.map(_.asInstanceOf[IloNumVar]));
-    var vres = cplex.getValues(vvars.map(_.asInstanceOf[IloNumVar]));
+    var ures = cplex.getValues(uvars);
+    var vres = cplex.getValues(vvars);
+    
+    cplex.end()
 
-    var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
-    var vassign = vres.zipWithIndex.filter(_._1 == 1)(0)._2;
+    var uassign = decide(ures);
+    var vassign = decide(vres);
 
     var res = new HashMap[Int, Boolean]();
 
     res += (u.id -> (u.primary != -1 && u.primary != uassign));
     res += (v.id -> (v.primary != -1 && v.primary != vassign));
-    
-    u.assign(uassign)
-    v.assign(vassign)
-    
+
+    partitions(uassign).addPrimary(u)
+    partitions(vassign).addPrimary(v)
+
+
     return res.toMap;
   }
 
@@ -126,26 +133,23 @@ class QPPartitioner(numPartition: Int) extends Partitioner {
    */
   def assign(u: Vertex): Boolean = {
     var p = partitions.size;
-    var lset = genlset();
 
     var cplex = new IloCplex();
+    cplex.setOut(null);
 
     // Create variables for u
-    var uvars = cplex.intVarArray(p, 0, 1);
+    var uvars = cplex.numVarArray(p, 0, 1);
 
-    // \sum x_{ui} = 1, \sum x_{vi} = 1
+    // \sum x_{ui} = 1
     var coef = Array.fill[Int](p)(1);
     cplex.addEq(1, cplex.scalProd(uvars, coef))
 
-    // \forall i in L, x_{ui} = x_{vi} = 0
-    lset.foreach(l => {
-      cplex.addEq(0, uvars(l))
-    })
-
     // Objective function
-    var uobjs = new Array[IloIntExpr](u.neighbors.size);
-    u.neighbors.zipWithIndex.foreach(n => {
-      uobjs(n._2) = uvars(n._1.primary);
+    var assignedNeighbors = u.neighbors.filter { _.primary != -1 }
+    var uobjs = new Array[IloNumExpr](assignedNeighbors.size);
+    assignedNeighbors.zipWithIndex.foreach(n => {
+      var p = partitions(n._1.primary)
+      uobjs(n._2) = cplex.prod(weight(p.size), uvars(p.id));
     });
 
     cplex.addMaximize(cplex.sum(uobjs));
@@ -153,35 +157,34 @@ class QPPartitioner(numPartition: Int) extends Partitioner {
     if (!cplex.solve()) {
       throw new RuntimeException("LP not solvable");
     }
-    var ures = cplex.getValues(uvars.map(_.asInstanceOf[IloNumVar]));
+    var ures = cplex.getValues(uvars);
 
-    var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
+    cplex.end()
+
+    // Generate a random number and determine the assignment
+
+    var uassign = decide(ures);
 
     var oldassign = u.primary
-    u.assign(uassign)
     
+    partitions(uassign).addPrimary(u)
+
     return oldassign != -1 && oldassign != uassign;
   }
 
-  /**
-   * Generate the L set using sigmoid function
-   */
-  def genlset(): Set[Int] = {
-    var avgSize = partitions.map(_.size).sum.toDouble / partitions.size;
+  def weight(psize: Int): Double = {
+    return Params.alpha / Math.pow(psize + Params.beta, 2)
+  }
 
-    var min = partitions.zipWithIndex.min(Ordering.by[(Partition, Int), Int](_._1.size))
-
-    var l = new HashSet[Int];
-
-    partitions.foreach(p => {
-      var prob = 1 / (1 + Math.exp(Params.sigmoidLambda * (avgSize - p.size)))
-      var randval = random.nextDouble();
-      if (prob >= randval) {
-        l += p.id
-      }
-    })
-
-    l.remove(min._1.id);
-    return l.toSet;
+  def decide(vec: Array[Double]): Int = {
+    var indicator = random.nextDouble()
+    for (i <- 1 to vec.size - 1) {
+      vec(i) = vec(i) + vec(i - 1)
+    }
+    for (i <- 0 to vec.size - 1) {
+      if (indicator <= vec(i))
+        return i;
+    }
+    return vec.size - 1;
   }
 }
