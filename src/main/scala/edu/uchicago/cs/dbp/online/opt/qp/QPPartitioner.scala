@@ -149,7 +149,8 @@ class QPPartitioner(numPartition: Int) extends Partitioner {
     var uobjs = new Array[IloNumExpr](assignedNeighbors.size);
     assignedNeighbors.zipWithIndex.foreach(n => {
       var p = partitions(n._1.primary)
-      uobjs(n._2) = cplex.prod(weight(p.size), uvars(p.id));
+      var w = weight(p.size)
+      uobjs(n._2) = cplex.prod(w, uvars(p.id));
     });
 
     cplex.addMaximize(cplex.sum(uobjs));
