@@ -17,13 +17,12 @@ import ilog.cplex.IloCplex
 import ilog.concert.IloNumExpr
 
 /**
- * Use weight function to limit partition size
+ * Instead of invoking CPLEX to solve ILP, compute the score for each partition
  */
-class MIPPartitioner2(numPartition: Int) extends Partitioner {
+
+class MIPPartitioner3(numPartition: Int) extends Partitioner {
 
   var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
-
-  private var slidingWindow = new ListBuffer[Double]();
 
   private var random = new Random(System.currentTimeMillis());
 
@@ -72,62 +71,45 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
     var u = e.vertices(0);
     var v = e.vertices(1);
     // Remove old assignment
-    
+
     var olduAssign = u.primary;
     if (olduAssign != -1) {
       partitions(u.primary).removePrimary(u);
     }
-    
+
     var oldvAssign = v.primary;
     if (oldvAssign != -1) {
       partitions(v.primary).removePrimary(v);
     }
 
-    var cplex = new IloCplex();
-    cplex.setOut(null)
+    // Compute assignment value for u and v
+    var uNeighbors = u.numPrimaryNeighbors(numPartition)
+    var vNeighbors = v.numPrimaryNeighbors(numPartition)
+    var psize = partitions.map(_.size)
 
-    // Create variables for u
-    var uvars = cplex.intVarArray(p, 0, 1);
-    // Create variables for v
-    var vvars = cplex.intVarArray(p, 0, 1);
+    var uScore = uNeighbors.zip(psize).map(t => score(t._1, t._2))
+    var vScore = vNeighbors.zip(psize).map(t => score(t._1, t._2))
 
-    // \sum x_{ui} = 1, \sum x_{vi} = 1
-    var coef = Array.fill[Int](p)(1);
-    cplex.addEq(1, cplex.scalProd(uvars, coef))
-    cplex.addEq(1, cplex.scalProd(vvars, coef))
+    var scores = Array.ofDim[Double](numPartition, numPartition)
 
-    // Objective function
-    var uAssignedNeighbors = u.neighbors.filter(_.primary != -1);
-    var uobjs = new Array[IloNumExpr](uAssignedNeighbors.size);
-    uAssignedNeighbors.zipWithIndex.foreach(n => {
-      var pn = n._1.primary;
-      var p = partitions(pn)
-      uobjs(n._2) = cplex.prod(weight(p.size), uvars(n._1.primary));
-    });
-
-    var vAssignedNeighbors = v.neighbors.filter(_.primary != -1);
-    var vobjs = new Array[IloNumExpr](vAssignedNeighbors.size);
-    vAssignedNeighbors.zipWithIndex.foreach(n => {
-      var p = partitions(n._1.primary)
-      vobjs(n._2) = cplex.prod(weight(p.size), vvars(n._1.primary));
-    });
-
-    var uvobjs = new Array[IloNumExpr](p);
-    for (i <- 0 to p - 1) {
-      uvobjs(i) = cplex.prod(weight(partitions(i).size), uvars(i), vvars(i))
+    // Looking for the maximal
+    var max = Double.MinValue
+    var candid = (-1, -1)
+    var single = Array.fill(numPartition)(1).zip(psize).map(t => score(t._1, t._2))
+    for (i <- 0 until numPartition) {
+      for (j <- 0 until numPartition) {
+        scores(i)(j) = uScore(i) + vScore(j)
+        if (i == j)
+          scores(i)(j) += single(i)
+        if (scores(i)(j) > max) {
+          max = scores(i)(j)
+          candid = (i, j)
+        }
+      }
     }
 
-    cplex.addMaximize(cplex.sum(cplex.sum(uobjs), cplex.sum(vobjs), cplex.sum(uvobjs)));
-
-    if (!cplex.solve()) {
-      throw new RuntimeException("LP not solvable");
-    }
-
-    var ures = cplex.getValues(uvars.map(_.asInstanceOf[IloNumVar]));
-    var vres = cplex.getValues(vvars.map(_.asInstanceOf[IloNumVar]));
-
-    var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
-    var vassign = vres.zipWithIndex.filter(_._1 == 1)(0)._2;
+    var uassign = candid._1
+    var vassign = candid._2
 
     var res = new HashMap[Int, Boolean]();
 
@@ -136,8 +118,6 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
 
     partitions(uassign).addPrimary(u)
     partitions(vassign).addPrimary(v)
-
-    cplex.end()
 
     return res.toMap;
   }
@@ -154,34 +134,16 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
       partitions(u.primary).removePrimary(u);
     }
 
-    var cplex = new IloCplex();
-    cplex.setOut(null)
+    var neighbors = u.numPrimaryNeighbors(numPartition)
+    var psizes = partitions.map(_.size)
 
-    // Create variables for u
-    var uvars = cplex.intVarArray(p, 0, 1);
+    var nweights = neighbors.zip(psizes).map(t => score(t._1, t._2))
 
-    // \sum x_{ui} = 1, \sum x_{vi} = 1
-    var coef = Array.fill[Int](p)(1);
-    cplex.addEq(1, cplex.scalProd(uvars, coef))
+    var maxWeight = nweights.zipWithIndex.max(Ordering.by[(Double, Int), Double](_._1))
 
-    // Objective function
-    var uobjs = new Array[IloNumExpr](u.neighbors.size);
-    u.neighbors.zipWithIndex.foreach(n => {
-      uobjs(n._2) = cplex.prod(weight(partitions(n._1.primary).size), uvars(n._1.primary));
-    });
-
-    cplex.addMaximize(cplex.sum(uobjs));
-
-    if (!cplex.solve()) {
-      throw new RuntimeException("LP not solvable");
-    }
-    var ures = cplex.getValues(uvars.map(_.asInstanceOf[IloNumVar]));
-
-    var uassign = ures.zipWithIndex.filter(_._1 == 1)(0)._2;
+    var uassign = maxWeight._2
 
     partitions(uassign).addPrimary(u)
-
-    cplex.end()
 
     return oldAssign != -1 && oldAssign != uassign;
   }
@@ -197,4 +159,7 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
     return Params.rho / (x * Math.log(Params.alpha * x))
   }
 
+  def score(n: Double, psize: Int): Double = {
+    n * weight(psize)
+  }
 }

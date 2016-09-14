@@ -15,6 +15,9 @@ import ilog.concert.IloIntExpr
 import ilog.concert.IloNumVar
 import ilog.cplex.IloCplex
 
+/**
+ * Use Sigmoid function to limit partition size
+ */
 class MIPPartitioner(numPartition: Int) extends Partitioner {
 
   var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
