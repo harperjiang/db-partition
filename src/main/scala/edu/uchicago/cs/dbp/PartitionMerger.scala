@@ -1,22 +1,31 @@
 package edu.uchicago.cs.dbp
 
-import scala.io.Source
 import scala.collection.mutable.HashMap
+import scala.io.Source
+
+object MergerParams {
+  /**
+   * How much the combination result can exceed the average
+   */
+  var threshold = 1.1f
+}
 
 class PartitionMerger {
 
-  def merge(edge: String, partition: String)(implicit pnum: Int = 10) = {
-    // Compute per-partition cross-edge
-    var result = Array.fill(pnum * (pnum - 1) / 2)(0)
-
+  def merge(edge: String, partition: String, fromSize: Int, toSize: Int) = {
     var pmap = new HashMap[Int, Int]();
 
+    var psize = Array.fill(fromSize)(0)
+
     Source.fromFile(partition).getLines.foreach(s => {
-      var parts = s.split("\\s+");
-      pmap += ((parts(1).toInt, parts(0).toInt))
+      var parts = s.split("\\s+")
+      var nid = parts(1).toInt
+      var pid = parts(0).toInt
+      pmap += ((nid, pid))
+      psize(pid) += 1
     })
 
-    var tm = new TriangularMatrix(pnum - 1)
+    var tm = new TriangularMatrix(fromSize - 1)
 
     Source.fromFile(edge).getLines().filter(!_.startsWith("#")) foreach (s => {
       var parts = s.split("\\s+");
@@ -32,13 +41,31 @@ class PartitionMerger {
     })
 
     // Search for max value that add up to less than average
-    var average = pmap.size / pnum
+
+    var average = pmap.size / toSize
+    var ceiling = average * MergerParams.threshold
+
+    var max = Double.MinValue
+    var index = (-1, -1)
+    for (i <- 0 until fromSize) {
+      for (j <- i + 1 until toSize) {
+        if (psize(i) + psize(j) < ceiling) {
+          var value = tm.get(i, j - 1)
+          if (value > max) {
+            index = (i, j)
+          }
+        }
+      }
+    }
+    // Merge partition i and j 
   }
 }
 
 class TriangularMatrix(num: Int) {
 
   var result = Array.fill(num * (num + 1) / 2)(0)
+
+  def size = num
 
   def translate(i: Int, j: Int): Int = {
     if (i > j)
