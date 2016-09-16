@@ -77,6 +77,8 @@ class PartitionMerger {
  * <code>MergeStep</code> indicates a merge operation of two partition
  */
 class MergeStep(i: Int, j: Int) {
+  if (i >= j || i < 0)
+    throw new IllegalArgumentException();
 
   def convert(psizes: Array[Int]): Array[Int] = {
     var converted = Array.fill(psizes.length - 1)(0)
