@@ -4,17 +4,15 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 import edu.uchicago.cs.dbp.Partitioner
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
-import ilog.concert.IloIntExpr
-import ilog.concert.IloNumVar
-import ilog.cplex.IloCplex
-import ilog.concert.IloNumExpr
+import edu.uchicago.cs.dbp.online.leopard.LeopardParams
+
+
 
 /**
  * Instead of invoking CPLEX to solve ILP, compute the score for each partition
@@ -49,11 +47,12 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
       var v = reassignCandidates.iterator.next();
       reassignCandidates.remove(v);
       if (v.numNeighbors != 0) {
-        var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
+        var probReassign = (1 / MIPParams.rescanProb - 1) / v.numNeighbors;
 
         var rand = random.nextDouble();
 
         if (rand <= probReassign) {
+          //        if (true) {
           if (assign(v)) { // This vertex is reassigned, add all its immediate neighbors
             reassignCandidates ++= v.neighbors;
           }
@@ -149,17 +148,20 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
   }
 
   def weight(psize: Int): Double = {
-
+    var x = psize + MIPParams.beta;
     var avg = partitions.map(_.size).sum / numPartition;
 
-    if (psize > avg * Params.threshold)
-      return 0;
+    if (psize > avg * MIPParams.threshold)
+      return MIPParams.rho / (x * x * Math.log(MIPParams.alpha * x));
 
-    var x = psize + Params.beta;
-    return Params.rho / (x * Math.log(Params.alpha * x))
+    return MIPParams.rho / (x * Math.log(MIPParams.alpha * x))
   }
 
+  //  def score(n: Double, psize: Int): Double = {
+  //    n * weight(psize)
+  //  }
+
   def score(n: Double, psize: Int): Double = {
-    n * weight(psize)
+    n - LeopardParams.wSize * LeopardParams.eSize * Math.pow(psize, LeopardParams.eSize - 1) / 2;
   }
 }

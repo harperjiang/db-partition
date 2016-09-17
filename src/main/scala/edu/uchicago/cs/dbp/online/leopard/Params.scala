@@ -1,7 +1,7 @@
 package edu.uchicago.cs.dbp.online.leopard
 
 import scala.collection.mutable.Stack
-object Params {
+object LeopardParams {
   // The weight of partition size when calculating scores
   var wSize = 0.53d;
 

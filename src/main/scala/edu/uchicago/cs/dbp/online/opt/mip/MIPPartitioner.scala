@@ -49,7 +49,7 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
       var v = reassignCandidates.iterator.next();
       reassignCandidates.remove(v);
       if (v.numNeighbors != 0) {
-        var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
+        var probReassign = (1 / MIPParams.rescanProb - 1) / v.numNeighbors;
 
         var rand = random.nextDouble();
 
@@ -210,7 +210,7 @@ class MIPPartitioner(numPartition: Int) extends Partitioner {
     var l = new HashSet[Int];
 
     partitions.foreach(p => {
-      var prob = 1 / (1 + Math.exp(Params.sigmoidLambda * (avgSize - p.size)))
+      var prob = 1 / (1 + Math.exp(MIPParams.sigmoidLambda * (avgSize - p.size)))
       var randval = random.nextDouble();
       if (prob >= randval) {
         l += p.id

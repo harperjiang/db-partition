@@ -1,13 +1,13 @@
 package edu.uchicago.cs.dbp.online.leopard.experiment.slashdot
 
-import edu.uchicago.cs.dbp.online.leopard.Params
+import edu.uchicago.cs.dbp.online.leopard.LeopardParams
 import edu.uchicago.cs.dbp.online.leopard.experiment.common.LeopardRunner
 object RunLeopard extends App {
 
-  Params.eSize = 1.7;
-  Params.wSize = 0.15;
-  Params.minReplica = 1;
-  Params.avgReplica = 1;
+  LeopardParams.eSize = 1.7;
+  LeopardParams.wSize = 0.15;
+  LeopardParams.minReplica = 1;
+  LeopardParams.avgReplica = 1;
 
-  LeopardRunner.run("leopard/slashdot/edge", 10, "leopard/slashdot/p_leopard")
+  LeopardRunner.run("dataset/slashdot/edge", 10, "dataset/slashdot/p_leopard")
 }

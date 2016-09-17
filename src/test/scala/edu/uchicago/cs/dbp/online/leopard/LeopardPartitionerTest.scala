@@ -31,9 +31,9 @@ class LeopardPartitionerTest {
     v3.attach(Array(v1, v4));
     v4.attach(Array(v2, v3));
 
-    Params.save();
-    Params.avgReplica = 1;
-    Params.minReplica = 1;
+    LeopardParams.save();
+    LeopardParams.avgReplica = 1;
+    LeopardParams.minReplica = 1;
 
     assertFalse(per.assign(v1));
     assertFalse(per.assign(v2));
@@ -45,7 +45,7 @@ class LeopardPartitionerTest {
     assertEquals(2, v3.primary);
     assertEquals(3, v4.primary);
 
-    Params.load();
+    LeopardParams.load();
   }
 
   @Test

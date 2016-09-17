@@ -11,10 +11,10 @@ import edu.uchicago.cs.dbp.Partitioner
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
-import ilog.concert.IloIntExpr
+import ilog.concert.IloNumExpr
 import ilog.concert.IloNumVar
 import ilog.cplex.IloCplex
-import ilog.concert.IloNumExpr
+
 
 /**
  * Use weight function to limit partition size
@@ -50,7 +50,7 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
       var v = reassignCandidates.iterator.next();
       reassignCandidates.remove(v);
       if (v.numNeighbors != 0) {
-        var probReassign = (1 / Params.rescanProb - 1) / v.numNeighbors;
+        var probReassign = (1 / MIPParams.rescanProb - 1) / v.numNeighbors;
 
         var rand = random.nextDouble();
 
@@ -190,11 +190,11 @@ class MIPPartitioner2(numPartition: Int) extends Partitioner {
 
     var avg = partitions.map(_.size).sum / numPartition;
 
-    if (psize > avg * Params.threshold)
+    if (psize > avg * MIPParams.threshold)
       return 0;
 
-    var x = psize + Params.beta;
-    return Params.rho / (x * Math.log(Params.alpha * x))
+    var x = psize + MIPParams.beta;
+    return MIPParams.rho / (x * Math.log(MIPParams.alpha * x))
   }
 
 }

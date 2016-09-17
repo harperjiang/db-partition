@@ -7,17 +7,17 @@ import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.PartitionPrinter
 import java.io.FileOutputStream
 import java.io.PrintWriter
-import edu.uchicago.cs.dbp.online.leopard.Params
+import edu.uchicago.cs.dbp.online.leopard.LeopardParams
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
 object RunLeopard extends App {
 
   var p = new LeopardPartitioner(10);
   
-  Params.eSize = 1.7;
-  Params.wSize = 0.53d;
-  Params.minReplica = 1;
-  Params.avgReplica = 1;
+  LeopardParams.eSize = 1.7;
+  LeopardParams.wSize = 0.53d;
+  LeopardParams.minReplica = 1;
+  LeopardParams.avgReplica = 1;
 
   var vertices = new HashMap[Int,Vertex]();
   

@@ -1,10 +1,8 @@
 package edu.uchicago.cs.dbp.online.opt.qp.experiment.wikivote
 
 import edu.uchicago.cs.dbp.PartitionRunner
-import edu.uchicago.cs.dbp.online.opt.mip.MIPPartitioner
-import edu.uchicago.cs.dbp.online.opt.mip.Params
-import edu.uchicago.cs.dbp.online.opt.mip.MIPPartitioner2
 import edu.uchicago.cs.dbp.online.opt.qp.QPPartitioner
+import edu.uchicago.cs.dbp.online.opt.qp.Params
 
 object Run extends App {
   Params.alpha = 2000;

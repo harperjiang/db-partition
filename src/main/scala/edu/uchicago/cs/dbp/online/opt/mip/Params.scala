@@ -1,7 +1,7 @@
 package edu.uchicago.cs.dbp.online.opt.mip
 
 import scala.collection.mutable.Stack
-object Params {
+object MIPParams {
 
   var rescanProb = 0.5f
 
