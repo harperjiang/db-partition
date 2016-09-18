@@ -5,7 +5,7 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
 class Vertex extends Equals {
-  var id: Int = 0;
+  var id: Int = -1;
 
   def this(vid: Int) = {
     this();
@@ -70,16 +70,15 @@ class Vertex extends Equals {
     other.isInstanceOf[edu.uchicago.cs.dbp.model.Vertex]
   }
 
-  override def equals(other: Any) = {
+  override def equals(other: Any): Boolean = {
     other match {
-      case that: Vertex => this.id == other.asInstanceOf[Vertex].id
+      case that: Vertex => this.id == that.id
       case _ => false
     }
   }
 
-  override def hashCode() = {
-    val prime = 41
-    prime * 13 + id.hashCode()
+  override def hashCode(): Int = {
+    return id.hashCode()
   }
 
 }

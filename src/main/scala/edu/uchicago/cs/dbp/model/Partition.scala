@@ -2,7 +2,9 @@ package edu.uchicago.cs.dbp.model
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Buffer
+import scala.collection.JavaConversions._
 import scala.collection.mutable.HashSet
+
 class Partition(pid: Int) {
 
   var id = pid;
@@ -18,7 +20,7 @@ class Partition(pid: Int) {
 
   def removePrimary(v: Vertex) = {
     v.assign(-1);
-    vertices -= v;
+    vertices -= (v)
   }
 
   def addSecondary(v: Vertex) = {

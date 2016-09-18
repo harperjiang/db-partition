@@ -12,8 +12,6 @@ import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
 import edu.uchicago.cs.dbp.online.leopard.LeopardParams
 
-
-
 /**
  * Instead of invoking CPLEX to solve ILP, compute the score for each partition
  */
@@ -69,6 +67,10 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
 
     var u = e.vertices(0);
     var v = e.vertices(1);
+    
+    if (u.id == v.id) {
+      return Map(u.id -> assign(u));
+    }
     // Remove old assignment
 
     var olduAssign = u.primary;
@@ -115,6 +117,9 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
     res += (u.id -> (olduAssign != -1 && olduAssign != uassign));
     res += (v.id -> (oldvAssign != -1 && oldvAssign != vassign));
 
+    if (u.id == v.id) {
+      throw new IllegalArgumentException("%d".format(u.id))
+    }
     partitions(uassign).addPrimary(u)
     partitions(vassign).addPrimary(v)
 

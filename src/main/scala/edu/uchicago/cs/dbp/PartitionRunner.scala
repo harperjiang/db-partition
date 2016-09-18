@@ -6,6 +6,7 @@ import scala.collection.mutable.HashMap
 import scala.io.Source
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Vertex
+import scala.collection.mutable.HashSet
 
 object PartitionRunner {
   def run(edgeFile: String, p: Partitioner, outfile: String) = {
@@ -17,7 +18,6 @@ object PartitionRunner {
       var v2id = parts(1).toInt;
       var v1 = vertices.getOrElseUpdate(v1id, new Vertex(v1id));
       var v2 = vertices.getOrElseUpdate(v2id, new Vertex(v2id));
-
       p.add(new Edge(Array(v1, v2)));
     });
 
