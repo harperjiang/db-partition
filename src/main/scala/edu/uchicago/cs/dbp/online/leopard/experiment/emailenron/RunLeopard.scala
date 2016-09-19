@@ -23,7 +23,7 @@ object RunLeopard extends App {
 
   var vertices = new HashMap[Int,Vertex]();
   
-  Source.fromFile("leopard/emailenron/edge").getLines().filter(!_.startsWith("#")).foreach(s => {
+  Source.fromFile("dataset/emailenron/edge").getLines().filter(!_.startsWith("#")).foreach(s => {
     var parts = s.split("\\s+")
     var v1id = parts(0).toInt;
     var v2id = parts(1).toInt;
@@ -33,7 +33,7 @@ object RunLeopard extends App {
     p.add(new Edge(Array(v1, v2)));
   });
 
-  var out = new PrintWriter(new FileOutputStream("leopard/emailenron/p_leopard"));
+  var out = new PrintWriter(new FileOutputStream("dataset/emailenron/p_leopard"));
   PartitionPrinter.print(p.partitions, out)
   out.close();
 }

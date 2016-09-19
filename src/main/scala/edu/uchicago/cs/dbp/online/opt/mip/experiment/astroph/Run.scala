@@ -10,7 +10,7 @@ object Run extends App {
   MIPParams.alpha = 10000f;
   MIPParams.beta = 1f;
 
-  LeopardParams.eSize = 1.45;
+  LeopardParams.eSize = 1.5;
   LeopardParams.wSize = 0.51;
   LeopardParams.minReplica = 1;
   LeopardParams.avgReplica = 1;

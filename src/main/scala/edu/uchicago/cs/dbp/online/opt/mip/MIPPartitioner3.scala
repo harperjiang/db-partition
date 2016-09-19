@@ -67,10 +67,15 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
 
     var u = e.vertices(0);
     var v = e.vertices(1);
-    
+
     if (u.id == v.id) {
       return Map(u.id -> assign(u));
     }
+
+    // Test. Remove later
+    return Map(u.id -> assign(u), v.id -> assign(v))
+    // Test Done
+
     // Remove old assignment
 
     var olduAssign = u.primary;
