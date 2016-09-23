@@ -166,17 +166,17 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
     var x = psize + MIPParams.beta;
     var avg = partitions.map(_.size).sum / numPartition;
 
-    if (psize > avg * MIPParams.threshold)
-      return MIPParams.rho / (x * x * Math.log(MIPParams.alpha * x));
+    //    if (psize > avg * MIPParams.threshold)
+    //      return MIPParams.rho / (x * x * Math.log(MIPParams.alpha * x));
 
     return MIPParams.rho / (x * Math.log(MIPParams.alpha * x))
   }
 
-  //  def score(n: Double, psize: Int): Double = {
-  //    n * weight(psize)
-  //  }
-
   def score(n: Double, psize: Int): Double = {
-    n - LeopardParams.wSize * LeopardParams.eSize * Math.pow(psize, LeopardParams.eSize - 1) / 2;
+    n * weight(psize)
   }
+
+  //  def score(n: Double, psize: Int): Double = {
+  //    n - LeopardParams.wSize * LeopardParams.eSize * Math.pow(psize, LeopardParams.eSize - 1) / 2;
+  //  }
 }

@@ -9,5 +9,5 @@ object RunLeopard extends App {
   LeopardParams.minReplica = 1;
   LeopardParams.avgReplica = 1;
 
-  LeopardRunner.run("leopard/livejournal/edge", 10, "leopard/livejournal/p_leopard")
+  LeopardRunner.run("dataset/livejournal/edge", 10, "dataset/livejournal/p_leopard")
 }

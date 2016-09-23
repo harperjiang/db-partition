@@ -9,5 +9,5 @@ object RunLeopard extends App {
   LeopardParams.minReplica = 1;
   LeopardParams.avgReplica = 1;
 
-  LeopardRunner.run("leopard/orkut/edge", 10, "leopard/orkut/p_leopard")
+  LeopardRunner.run("dataset/orkut/edge", 10, "dataset/orkut/p_leopard")
 }
