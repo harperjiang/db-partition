@@ -30,9 +30,8 @@ class LeopardPartitioner(numPartition: Int) extends Partitioner {
     e.vertices.foreach {
       v =>
         {
-          if (v.primary == -1) { // Not assigned
-            assign(v);
-          } else {
+          var reassign = assign(v)
+          if (reassign) {
             reassignCandidates += v; // Already assigned, check for reassignment
           }
         }

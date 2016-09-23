@@ -72,10 +72,11 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
       return Map(u.id -> assign(u));
     }
 
+    /*
     // Test. Remove later
     return Map(u.id -> assign(u), v.id -> assign(v))
     // Test Done
-
+*/
     // Remove old assignment
 
     var olduAssign = u.primary;
@@ -101,12 +102,16 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
     // Looking for the maximal
     var max = Double.MinValue
     var candid = (-1, -1)
-    var single = Array.fill(numPartition)(1).zip(psize).map(t => score(t._1, t._2))
+
+    var singleu = uNeighbors.zip(psize).map(t => score(t._1 + 1, t._2))
+    var singlev = vNeighbors.zip(psize).map(t => score(t._1 + 1, t._2))
+
+    var single = singleu.zip(singlev).map(t => t._1 + t._2)
     for (i <- 0 until numPartition) {
       for (j <- 0 until numPartition) {
         scores(i)(j) = uScore(i) + vScore(j)
         if (i == j)
-          scores(i)(j) += single(i)
+          scores(i)(j) = single(i)
         if (scores(i)(j) > max) {
           max = scores(i)(j)
           candid = (i, j)
@@ -148,7 +153,7 @@ class MIPPartitioner3(numPartition: Int) extends Partitioner {
 
     var nweights = neighbors.zip(psizes).map(t => score(t._1, t._2))
 
-    var maxWeight = nweights.zipWithIndex.max(Ordering.by[(Double, Int), Double](_._1))
+    var maxWeight = nweights.zipWithIndex.maxBy(_._1)
 
     var uassign = maxWeight._2
 
