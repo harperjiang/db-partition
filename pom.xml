@@ -51,8 +51,14 @@
 			<artifactId>scala-library</artifactId>
 			<version>${scala.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-client</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
 	</dependencies>
 	<properties>
 		<scala.version>2.11.3</scala.version>
+		<hadoop.version>2.6.0</hadoop.version>
 	</properties>
 </project>
