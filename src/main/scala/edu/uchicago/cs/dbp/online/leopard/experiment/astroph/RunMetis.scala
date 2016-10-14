@@ -8,7 +8,6 @@ import scala.collection.mutable.Buffer
 import scala.collection.mutable.HashMap
 import scala.io.Source
 import scala.collection.mutable.HashSet
-import org.apache.hadoop.util.hash.Hash
 
 object RunMetis extends App {
   translateInput();

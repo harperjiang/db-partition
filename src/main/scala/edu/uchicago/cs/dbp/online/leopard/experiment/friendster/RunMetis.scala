@@ -9,7 +9,6 @@ import scala.collection.mutable.HashMap
 import scala.io.Source
 import scala.util.control._
 import scala.collection.mutable.HashSet
-import org.apache.hadoop.util.hash.Hash
 import edu.uchicago.cs.dbp.online.leopard.experiment.common.MetisRunner
 
 object RunMetis extends App {

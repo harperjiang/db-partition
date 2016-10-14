@@ -1,9 +1,8 @@
 package edu.uchicago.cs.dbp.online.mlayer
 
-import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.AbstractPartitioner
+import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Vertex
-import edu.uchicago.cs.dbp.model.Partition
 
 /**
  * Add a HyperVertex layer between vertex and partition
@@ -13,22 +12,61 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
   /**
    * Mapping from vertex to its HyperVertex
    */
-  var hvs = scala.collection.mutable.HashMap[Int,HyperVertex](); 
+  var hvs = scala.collection.mutable.HashMap[Int, HyperVertex]();
 
   def add(e: Edge) = {
 
   }
-}
 
-class HyperVertex(vid: Int) {
+  object HyperVertex { def apply(vid:Int) = new HyperVertex(vid)}
 
-  var id = vid;
+  class HyperVertex(vid: Int) {
 
-  var pid = 0;
+    var id = vid;
 
-  var vertices = new scala.collection.mutable.HashSet[Vertex];
+    var pid = -1;
+    
+    var neighbors = scala.collection.mutable.HashSet[HyperVertex]()
 
-  def merge(hv: HyperVertex) = {
+    var vertices = new scala.collection.mutable.HashSet[Vertex];
 
+    /**
+     * Remove the vertex from existing partitions (if any) and add it to the hyper-vertex's partition (if any)
+     */
+    def add(v: Vertex) = {
+      vertices += v;
+
+      if (pid != v.primary) {
+        if (v.primary != -1) {
+          var vp = partitions(v.primary)
+          vp.removePrimary(v)
+        }
+        if (pid != -1) {
+          var hvp = partitions(pid)
+          hvp.addPrimary(v)
+        }
+      }
+    }
+    /**
+     * Remove vertex from this hyper-vertex, but didn't change its partition (if any)
+     */
+    def remove(v: Vertex) = {
+      vertices -= v
+    }
+
+    /**
+     * Assign a partition id to the hyper vertex
+     */
+    def assign(pid:Int) = {
+      
+    }
+    
+    /**
+     * Merge the target to current hyper vertex, discard the target
+     */
+    def merge(target: MLayerPartitioner#HyperVertex) = {
+      
+    }
   }
 }
+
