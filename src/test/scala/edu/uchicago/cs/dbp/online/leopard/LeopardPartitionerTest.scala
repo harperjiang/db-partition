@@ -32,6 +32,7 @@ class LeopardPartitionerTest {
     v4.attach(Array(v2, v3));
 
     LeopardParams.save();
+    LeopardParams.wSize = 5;
     LeopardParams.avgReplica = 1;
     LeopardParams.minReplica = 1;
 

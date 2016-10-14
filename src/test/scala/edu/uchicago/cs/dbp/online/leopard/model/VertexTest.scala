@@ -26,24 +26,24 @@ class VertexTest {
 
   @Test
   def testNumPrimaryNeighbors(): Unit = {
-    var v = new Vertex();
+    var v = new Vertex(0);
 
-    var v1 = new Vertex();
+    var v1 = new Vertex(1);
     v1.assign(0);
     v1.addSecondary(1);
     v1.addSecondary(3);
 
-    var v2 = new Vertex();
+    var v2 = new Vertex(2);
     v2.assign(1);
     v2.addSecondary(0);
     v2.addSecondary(2);
     v2.addSecondary(3);
 
-    var v3 = new Vertex();
+    var v3 = new Vertex(3);
     v3.assign(2);
     v3.addSecondary(1);
 
-    var v4 = new Vertex();
+    var v4 = new Vertex(4);
     v4.assign(2);
     v4.addSecondary(0);
     v4.addSecondary(3);
@@ -57,24 +57,24 @@ class VertexTest {
 
   @Test
   def testNumSecondaryNeighbors(): Unit = {
-    var v = new Vertex();
+    var v = new Vertex(1);
 
-    var v1 = new Vertex();
+    var v1 = new Vertex(2);
     v1.assign(0);
     v1.addSecondary(1);
     v1.addSecondary(3);
 
-    var v2 = new Vertex();
+    var v2 = new Vertex(3);
     v2.assign(1);
     v2.addSecondary(0);
     v2.addSecondary(2);
     v2.addSecondary(3);
 
-    var v3 = new Vertex();
+    var v3 = new Vertex(4);
     v3.assign(2);
     v3.addSecondary(1);
 
-    var v4 = new Vertex();
+    var v4 = new Vertex(5);
     v4.assign(2);
     v4.addSecondary(0);
     v4.addSecondary(3);

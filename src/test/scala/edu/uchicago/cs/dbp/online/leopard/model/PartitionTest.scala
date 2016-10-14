@@ -11,9 +11,9 @@ class PartitionTest {
   @Test
   def testAddPrimary(): Unit = {
     var p = new Partition(3);
-    var v = new Vertex();
+    var v = new Vertex(1);
     p.addPrimary(v);
-    var v2 = new Vertex();
+    var v2 = new Vertex(2);
     p.addPrimary(v2);
 
     assertEquals(2, p.size())
@@ -25,9 +25,9 @@ class PartitionTest {
   @Test
   def testAddSecondary(): Unit = {
     var p = new Partition(3);
-    var v = new Vertex();
+    var v = new Vertex(1);
     p.addPrimary(v);
-    var v2 = new Vertex();
+    var v2 = new Vertex(2);
     p.addSecondary(v2);
 
     assertEquals(2, p.size())
