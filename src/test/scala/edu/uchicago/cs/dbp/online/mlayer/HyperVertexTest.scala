@@ -16,9 +16,9 @@ class HyperVertexTest {
 
   @Test
   def testMerge = {
-    var mlp = new MLayerPartitioner(10)
-    var hv1 = mlp.HyperVertex(1)
-    var hv2 = mlp.HyperVertex(2)
+    val mlp = new MLayerPartitioner(10)
+    var hv1 = new mlp.HyperVertex(1)
+    var hv2 = new mlp.HyperVertex(2)
 
     hv1.merge(hv2)
   }

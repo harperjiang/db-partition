@@ -64,7 +64,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     /**
      * Merge the target to current hyper vertex, discard the target
      */
-    def merge(target: MLayerPartitioner#HyperVertex) = {
+    def merge(target: HyperVertex) = {
       
     }
   }
