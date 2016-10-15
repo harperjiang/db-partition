@@ -5,5 +5,6 @@ import edu.uchicago.cs.dbp.model.Partition
 
 trait Partitioner {
   def add(e: Edge);
+  def done;
   def partitions: Iterable[Partition];
 }

@@ -11,20 +11,15 @@ import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
 import edu.uchicago.cs.dbp.online.leopard.LeopardParams
+import edu.uchicago.cs.dbp.AbstractPartitioner
 
 /**
  * Instead of invoking CPLEX to solve ILP, compute the score for each partition
  */
 
-class MIPPartitioner3(numPartition: Int) extends Partitioner {
-
-  var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
+class MIPPartitioner3(numPartition: Int) extends AbstractPartitioner(numPartition) {
 
   private var random = new Random(System.currentTimeMillis());
-
-  for (i <- 0 until numPartition) {
-    partitions += new Partition(i);
-  }
 
   /**
    * Add an edge to the system and trigger partition assignment

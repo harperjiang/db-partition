@@ -11,18 +11,13 @@ import edu.uchicago.cs.dbp.Partitioner
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
+import edu.uchicago.cs.dbp.AbstractPartitioner
 
-class LeopardPartitioner(numPartition: Int) extends Partitioner {
-
-  var partitions: Buffer[Partition] = new ArrayBuffer[Partition];
+class LeopardPartitioner(numPartition: Int) extends AbstractPartitioner(numPartition) {
 
   private var slidingWindow = new ListBuffer[Double]();
 
   private var random = new Random(System.currentTimeMillis());
-
-  for (i <- 0 until numPartition) {
-    partitions += new Partition(i);
-  }
 
   def add(e: Edge): Unit = {
     var reassignCandidates = new HashSet[Vertex]();
