@@ -5,78 +5,76 @@ import java.util.concurrent.atomic.AtomicInteger
 import edu.uchicago.cs.dbp.AbstractPartitioner
 import edu.uchicago.cs.dbp.model.Edge
 import edu.uchicago.cs.dbp.model.Vertex
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 /**
  * Add a HyperVertex layer between vertex and partition
  */
 class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
+  var random = new Random(System.currentTimeMillis())
   /**
    * Mapping from vertex to its HyperVertex
    */
   var hvs = scala.collection.mutable.HashMap[Int, HyperVertex]();
 
   def add(e: Edge) = {
+    var u = e.vertices(0)
+    var v = e.vertices(1)
 
+    // Get hyper vertices
+    def hypergen(v: Vertex): HyperVertex = {
+      var hv = new HyperVertex(v.id)
+      hv.add(v)
+      hv
+    }
+
+    var hvu = hvs.getOrElseUpdate(u.id, hypergen(u))
+    var hvv = hvs.getOrElseUpdate(v.id, hypergen(v))
+
+    // If necessary, move the vertex between hyper vertices
+    var newhvu = resite(u, hvu)
+    var newhvv = resite(v, hvv)
+
+    var reassign = new ArrayBuffer[HyperVertex]();
+    reassign ++= Array(hvu, hvv, newhvu, newhvv)
+
+    while (!reassign.isEmpty) {
+      var hv = reassign.remove(0)
+      if (assign(hv)) {
+        reassign ++= hv.neighbors
+      }
+    }
+  }
+
+  /**
+   * Move the vertex between hyper vertices if necessary.
+   */
+  protected def resite(v: Vertex, hv: HyperVertex): HyperVertex = {
+    null
+    // Use a score function to determine whether
+  }
+
+  /**
+   * (Re)assign the hyper vertex to some partition if necessary.
+   *
+   * @return true if the hyper vertex is reassigned
+   */
+  protected def assign(hv: HyperVertex): Boolean = {
+    false
   }
 
   class HyperVertex(vid: Int) {
 
     var id = vid;
 
-    var pid = -1;
-
-    var neighbors = scala.collection.mutable.HashMap[HyperVertex, AtomicInteger]()
-
-    var vertices = new scala.collection.mutable.HashSet[Vertex];
-
-    /**
-     * Assign a partition id to the hyper vertex
-     */
-    def assign(pid: Int) = {
-      this.pid = pid;
+    def neighbors: Iterator[HyperVertex] = {
+      null
     }
 
-    /**
-     * Remove the vertex from existing partitions (if any) and add it to the hyper-vertex's partition (if any)
-     */
     def add(v: Vertex) = {
-      vertices += v;
-
-      // Handle Partitions
-      if (pid != v.primary) {
-        if (v.primary != -1) {
-          var vp = partitions(v.primary)
-          vp.removePrimary(v)
-        }
-        if (pid != -1) {
-          var hvp = partitions(pid)
-          hvp.addPrimary(v)
-        }
-      }
-      // Handle neighbors
-      var nhvo = hvs.get(v.id)
-      if (!nhvo.isEmpty)
-        neighbors.getOrElse(nhvo.get, new AtomicInteger(0)).incrementAndGet()
-    }
-
-    /**
-     * Remove vertex from this hyper-vertex, but didn't change its partition (if any)
-     */
-    def remove(v: Vertex) = {
-      vertices -= v
-      // Remove neighbors
-      var nhv = hvs.get(v.id).get
-
-      if (0 == neighbors.get(nhv).get.decrementAndGet())
-        neighbors.remove(nhv)
-    }
-
-    /**
-     * Merge the target to current hyper vertex, discard the target
-     */
-    def merge(target: HyperVertex) = {
-
+      null
     }
 
     override def equals(obj: Any): Boolean = {

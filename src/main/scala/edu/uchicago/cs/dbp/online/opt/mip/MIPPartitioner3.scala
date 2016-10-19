@@ -12,6 +12,7 @@ import edu.uchicago.cs.dbp.model.Partition
 import edu.uchicago.cs.dbp.model.Vertex
 import edu.uchicago.cs.dbp.online.leopard.LeopardParams
 import edu.uchicago.cs.dbp.AbstractPartitioner
+import edu.uchicago.cs.dbp.online.ScoreFunc
 
 /**
  * Instead of invoking CPLEX to solve ILP, compute the score for each partition
@@ -66,12 +67,6 @@ class MIPPartitioner3(numPartition: Int) extends AbstractPartitioner(numPartitio
     if (u.id == v.id) {
       return Map(u.id -> assign(u));
     }
-
-    /*
-    // Test. Remove later
-    return Map(u.id -> assign(u), v.id -> assign(v))
-    // Test Done
-*/
     // Remove old assignment
 
     var olduAssign = u.primary;
@@ -167,11 +162,11 @@ class MIPPartitioner3(numPartition: Int) extends AbstractPartitioner(numPartitio
     return MIPParams.rho / (x * Math.log(MIPParams.alpha * x))
   }
 
-  def score(n: Double, psize: Int): Double = {
-    n * weight(psize)
-  }
-
   //  def score(n: Double, psize: Int): Double = {
-  //    n - LeopardParams.wSize * LeopardParams.eSize * Math.pow(psize, LeopardParams.eSize - 1) / 2;
+  //    n * weight(psize)
   //  }
+
+  def score(n: Double, psize: Int): Double = {
+    ScoreFunc.leopardScore(n,psize)
+  }
 }
