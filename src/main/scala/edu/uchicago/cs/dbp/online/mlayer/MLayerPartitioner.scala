@@ -29,13 +29,13 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       hv.add(v)
       hv
     }
-
-    var hvu = hvs.getOrElseUpdate(u.id, hypergen(u))
-    var hvv = hvs.getOrElseUpdate(v.id, hypergen(v))
-
-    // If necessary, move the vertex between hyper vertices
-    var newhvu = resite(u, hvu)
-    var newhvv = resite(v, hvv)
+    /*
+     * If a vertex doesn't have a hv, create one if it has enough neighbors, merge it to some neighbor otherwise
+     * If a vertex already have a hv with more than one vertex, move it out if it has enough neighbors.
+     * If the new edge bring in new neighbors for existing hvs, combine the hvs if possible.
+     */
+    var hvu = resite(u)
+    var hvv = resite(v)
 
     var reassign = new ArrayBuffer[HyperVertex]();
     reassign ++= Array(hvu, hvv, newhvu, newhvv)
@@ -50,8 +50,10 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
   /**
    * Move the vertex between hyper vertices if necessary.
+   *
+   *
    */
-  protected def resite(v: Vertex, hv: HyperVertex): HyperVertex = {
+  protected def resite(v: Vertex): HyperVertex = {
     null
     // Use a score function to determine whether
   }
