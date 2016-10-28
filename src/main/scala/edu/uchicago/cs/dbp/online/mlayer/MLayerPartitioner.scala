@@ -1,6 +1,6 @@
 package edu.uchicago.cs.dbp.online.mlayer
 
-import edu.uchicago.cs.dbp.model.{Edge, Vertex}
+import edu.uchicago.cs.dbp.model.{ Edge, Vertex }
 import edu.uchicago.cs.dbp.AbstractPartitioner
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -26,20 +26,25 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     var hvu = hvs.getOrElseUpdate(u.id, hyperFetch(u))
     var hvv = hvs.getOrElseUpdate(v.id, hyperFetch(v))
 
-    var reassign = new ArrayBuffer[HyperVertex]();
-    reassign += hvu += hvv
-
     /*
      * Merge two hyper vertices if necessary 
      */
     if (!hvu.equals(hvv) && shouldMerge(hvu, hvv)) {
       hvu.merge(hvv)
-      reassign -= hvv
     }
+
+    // Making assignment
+
+    var assignHvu = assign(hvu, true)
+    var assignHvv = assign(hvv, true)
+
+    var reassign = new ArrayBuffer[HyperVertex]();
+    if (assignHvu) reassign += hvu
+    if (assignHvv) reassign += hvv
 
     while (!reassign.isEmpty) {
       val hv = reassign.remove(0)
-      if (assign(hv)) {
+      if (assign(hv, false)) {
         reassign ++= hv.neighbors
       }
     }
@@ -78,8 +83,25 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
    *
    * @return true if the hyper vertex is reassigned
    */
-  protected def assign(hv: HyperVertex): Boolean = {
-    false
+  protected def assign(hv: HyperVertex, force: Boolean): Boolean = {
+
+    var shouldDo = hv.assigned == -1 || force match {
+      case false => {
+        false
+      }
+      case _ => force
+    }
+
+    if (shouldDo) {
+      val oldAssign = hv.assigned
+      val newAssign = hv.neighbors
+      //      oldAssign != newAssign
+
+      //TODO Not Done
+      false
+    } else {
+      false
+    }
   }
 
   protected def hasEnoughNeighbors(u: Vertex): Boolean = {
@@ -100,9 +122,18 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     false
   }
 
+  /**
+   * Partition with highest score will get this hv assigned
+   */
+  protected def assignScore(n: Int, psize: Int): Double = {
+    0
+  }
+
   class HyperVertex(vid: Int) {
 
     var id = vid;
+
+    def assigned: Int = -1
 
     def size: Int = 0
 
