@@ -23,22 +23,22 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     var u = e.vertices(0)
     var v = e.vertices(1)
 
-    // Get hyper vertices
-    def hypergen(v: Vertex): HyperVertex = {
-      var hv = new HyperVertex(v.id)
-      hv.add(v)
-      hv
-    }
     /*
-     * If a vertex doesn't have a hv, create one if it has enough neighbors, merge it to some neighbor otherwise
-     * If a vertex already have a hv with more than one vertex, move it out if it has enough neighbors.
-     * If the new edge bring in new neighbors for existing hvs, combine the hvs if possible.
+     * Fetch or create a hyper vertex for the vertex 
      */
-    var hvu = resite(u)
-    var hvv = resite(v)
+    var hvu = hvs.getOrElseUpdate(u.id, hyperfetch(u))
+    var hvv = hvs.getOrElseUpdate(v.id, hyperfetch(v))
 
     var reassign = new ArrayBuffer[HyperVertex]();
-    reassign ++= Array(hvu, hvv, newhvu, newhvv)
+    reassign += hvu += hvv
+
+    /*
+     * Merge two hyper vertices if necessary 
+     */
+    if (!hvu.equals(hvv) && shouldMerge(hvu, hvv)) {
+      hvu.merge(hvv)
+      reassign -= hvv
+    }
 
     while (!reassign.isEmpty) {
       var hv = reassign.remove(0)
@@ -49,13 +49,32 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
   }
 
   /**
-   * Move the vertex between hyper vertices if necessary.
-   *
-   *
+   * If a vertex doesn't have a hv, create one if it has enough neighbors, merge it to some neighbor otherwise
+   * If a vertex already have a hv with more than one vertex, move it out if it has enough neighbors.
    */
-  protected def resite(v: Vertex): HyperVertex = {
-    null
-    // Use a score function to determine whether
+  protected def hyperfetch(u: Vertex): HyperVertex = {
+
+    var shouldIsolate = hasEnoughNeighbors(u);
+
+    if (shouldIsolate) {
+      var hv = hvs.getOrElse(u.id, null)
+      if (null != hv && hv.size > 1) {
+        hv.remove(u)
+      }
+      var newhv = new HyperVertex(u.id)
+      newhv.add(u)
+      hvs += ((u.id, newhv))
+      return newhv;
+    } else {
+      // Find a neighbor hv to merge to
+      var mergeto = u.neighbors
+        .map(v => hvs.getOrElse(v.id, null))
+        .filter(hv => hv != null).toSet.zipWithIndex
+        .map(hvi => (joinScore(hvi._1), hvi._1))
+        .maxBy(_._1)._2
+      mergeto.add(u)
+      return mergeto;
+    }
   }
 
   /**
@@ -67,16 +86,44 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     false
   }
 
+  protected def hasEnoughNeighbors(u: Vertex): Boolean = {
+    false
+  }
+
+  /**
+   * Vertex will choose the neighbor hvs having highest score to join
+   */
+  protected def joinScore(hv: HyperVertex): Double = {
+    0
+  }
+
+  /**
+   * Determine whether two hyper vertices should be merged together
+   */
+  protected def shouldMerge(hv1: HyperVertex, hv2: HyperVertex): Boolean = {
+    false
+  }
+
   class HyperVertex(vid: Int) {
 
     var id = vid;
 
-    def neighbors: Iterator[HyperVertex] = {
+    def size: Int = 0
+
+    def neighbors: Iterable[HyperVertex] = {
       null
     }
 
-    def add(v: Vertex) = {
-      null
+    def add(u: Vertex) = {
+
+    }
+
+    def remove(u: Vertex) = {
+
+    }
+
+    def merge(hv: HyperVertex) = {
+
     }
 
     override def equals(obj: Any): Boolean = {
