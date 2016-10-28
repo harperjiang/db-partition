@@ -143,8 +143,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
    */
   protected def shouldReassign(hv: HyperVertex): Boolean = {
     val probe = random.nextDouble()
-    probe < 1 / hv.size.toDouble
-    // TODO Should refer to Leopard Impl and use a tunable parameter
+    probe < (1 / MLayerParams.reassignRatio - 1) / hv.size;
   }
 
   /**
@@ -166,6 +165,9 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       throw new RuntimeException("Not implemented")
     }
 
+    /**
+     * The average number of neighbors for each vertex in the hv
+     */
     def avgNumNeighbors: Double = {
       throw new RuntimeException("Not implemented")
     }

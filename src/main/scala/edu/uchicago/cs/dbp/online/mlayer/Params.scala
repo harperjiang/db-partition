@@ -6,5 +6,5 @@ object MLayerParams {
   
   val mergeThreshold = 2d
   
-  val reassignRatio = 1d;
+  val reassignRatio = 0.5d;
 }
