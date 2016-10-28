@@ -4,6 +4,7 @@ import edu.uchicago.cs.dbp.model.{ Edge, Vertex }
 import edu.uchicago.cs.dbp.AbstractPartitioner
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
+import edu.uchicago.cs.dbp.online.ScoreFunc
 
 /**
  * Add a HyperVertex layer between vertex and partition
@@ -71,7 +72,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       val mergeTo = u.neighbors
         .map(v => hvs.getOrElse(v.id, null))
         .filter(hv => hv != null).toSet.zipWithIndex
-        .map(hvi => (joinScore(hvi._1), hvi._1))
+        .map(hvi => (joinScore(u, hvi._1), hvi._1))
         .maxBy(_._1)._2
       mergeTo.add(u)
       return mergeTo;
@@ -84,49 +85,72 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
    * @return true if the hyper vertex is reassigned
    */
   protected def assign(hv: HyperVertex, force: Boolean): Boolean = {
-
-    var shouldDo = hv.assigned == -1 || force match {
-      case false => {
-        false
-      }
-      case _ => force
-    }
-
-    if (shouldDo) {
+    if (hv.assigned == -1 || force || shouldReassign(hv)) {
       val oldAssign = hv.assigned
-      val newAssign = hv.neighbors
-      //      oldAssign != newAssign
 
-      //TODO Not Done
-      false
+      val newAssign = hv.neighbors
+        .map(_.assigned).filter(_ != -1)
+        .groupBy[Int](f => f).toList
+        .map(f => (f._1, assignScore(f._2.size, partitions(f._1).size)))
+        .maxBy(_._2)._1
+      hv.assign(newAssign)
+      oldAssign != newAssign
     } else {
       false
     }
   }
 
+  /**
+   * Current implementation just check a pre-defined threshold
+   */
   protected def hasEnoughNeighbors(u: Vertex): Boolean = {
-    false
+    u.neighbors.size >= MLayerParams.neighborThreshold
   }
 
   /**
    * Vertex will choose the neighbor hvs having highest score to join
+   *
+   * Current implementation is to find the hv with closest in-group average
    */
-  protected def joinScore(hv: HyperVertex): Double = {
-    0
+  protected def joinScore(v: Vertex, hv: HyperVertex): Double = {
+    // First rule out hvs having single node with more than threshold neighbors
+    isSingleOut(hv) match {
+      case true => Double.MinValue
+      case _ => -(hv.avgNumNeighbors - v.numNeighbors).abs
+    }
+  }
+
+  protected def isSingleOut(hv: HyperVertex): Boolean = {
+    hv.size == 1 && hv.avgNumNeighbors >= MLayerParams.neighborThreshold
   }
 
   /**
    * Determine whether two hyper vertices should be merged together
    */
   protected def shouldMerge(hv1: HyperVertex, hv2: HyperVertex): Boolean = {
-    false
+    isSingleOut(hv1) || isSingleOut(hv2) match {
+      case true => false
+      case _ => {
+        val ratio = (hv1.avgNumNeighbors / hv2.avgNumNeighbors)
+        ratio < MLayerParams.mergeThreshold && ratio > (1 / MLayerParams.mergeThreshold)
+      }
+    }
+  }
+
+  /**
+   * Determine whether should recalculate the reassignment of a hyper vertex
+   * Current implementation choose to use the inverse of size
+   */
+  protected def shouldReassign(hv: HyperVertex): Boolean = {
+    val probe = random.nextDouble()
+    probe < 1 / hv.size.toDouble
   }
 
   /**
    * Partition with highest score will get this hv assigned
    */
   protected def assignScore(n: Int, psize: Int): Double = {
-    0
+    ScoreFunc.leopardScore(n, psize)
   }
 
   class HyperVertex(vid: Int) {
@@ -139,6 +163,15 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
     def neighbors: Iterable[HyperVertex] = {
       null
+    }
+
+    def avgNumNeighbors: Double = {
+      0
+    }
+
+    // Should remove old assign and apply new assign if necessary
+    def assign(p: Int) = {
+
     }
 
     def add(u: Vertex) = {
