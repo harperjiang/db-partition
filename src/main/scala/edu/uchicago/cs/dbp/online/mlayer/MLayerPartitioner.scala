@@ -5,6 +5,8 @@ import edu.uchicago.cs.dbp.AbstractPartitioner
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import edu.uchicago.cs.dbp.online.ScoreFunc
+import scala.collection.mutable.HashSet
+import edu.uchicago.cs.dbp.model.Partition
 
 /**
  * Add a HyperVertex layer between vertex and partition
@@ -157,36 +159,71 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
     var id = vid;
 
-    def assigned: Int = -1
+    private var partition = -1
 
-    def size: Int = 0
+    private var vertices = HashSet[Vertex]()
 
-    def neighbors: Iterable[HyperVertex] = {
-      throw new RuntimeException("Not implemented")
+    private var neighbours = HashSet[HyperVertex]()
+
+    def assigned: Int = partition
+
+    // Should remove old assign and apply new assign if necessary
+    def assign(p: Int) = {
+      if (partition != -1) {
+        vertices.foreach(u => {
+          partitions(u.id).removePrimary(u)
+        })
+      }
+      vertices.foreach(u => { partitions(p).addPrimary(u) })
+      partition = p
     }
+
+    def size: Int = vertices.size
+
+    def neighbors: Iterable[HyperVertex] = neighbours
 
     /**
      * The average number of neighbors for each vertex in the hv
      */
     def avgNumNeighbors: Double = {
-      throw new RuntimeException("Not implemented")
-    }
-
-    // Should remove old assign and apply new assign if necessary
-    def assign(p: Int) = {
-      throw new RuntimeException("Not implemented")
+      vertices.map(_.numNeighbors).sum / vertices.size
     }
 
     def add(u: Vertex) = {
-      throw new RuntimeException("Not implemented")
+      vertices += u
+      hvs += ((u.id, this))
+      if (partition != u.primary) {
+        if (u.primary != -1) {
+          partitions(u.primary).removePrimary(u)
+        }
+        if (partition != -1) {
+          partitions(partition).addPrimary(u)
+        }
+      }
     }
 
     def remove(u: Vertex) = {
-      throw new RuntimeException("Not implemented")
+      vertices -= u
+      hvs -= u.id
+      if (partition != -1) {
+        partitions(partition).removePrimary(u)
+      }
     }
 
     def merge(hv: HyperVertex) = {
-      throw new RuntimeException("Not implemented")
+      var hvp: Partition = null;
+      var p: Partition = null
+      if (hv.partition != -1)
+        hvp = partitions(hv.partition)
+      if (partition != -1)
+        p = partitions(partition)
+      hv.vertices.foreach(u => {
+        if (hvp != null)
+          hvp.removePrimary(u)
+        if (p != null)
+          p.addPrimary(u)
+        hvs += ((u.id, this))
+      })
     }
 
     override def equals(obj: Any): Boolean = {
