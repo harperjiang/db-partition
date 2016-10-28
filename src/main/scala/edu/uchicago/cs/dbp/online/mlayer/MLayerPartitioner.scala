@@ -1,10 +1,7 @@
 package edu.uchicago.cs.dbp.online.mlayer
 
-import java.util.concurrent.atomic.AtomicInteger
-
+import edu.uchicago.cs.dbp.model.{Edge, Vertex}
 import edu.uchicago.cs.dbp.AbstractPartitioner
-import edu.uchicago.cs.dbp.model.Edge
-import edu.uchicago.cs.dbp.model.Vertex
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
@@ -20,14 +17,14 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
   var hvs = scala.collection.mutable.HashMap[Int, HyperVertex]();
 
   def add(e: Edge) = {
-    var u = e.vertices(0)
-    var v = e.vertices(1)
+    val u = e.vertices(0)
+    val v = e.vertices(1)
 
     /*
      * Fetch or create a hyper vertex for the vertex 
      */
-    var hvu = hvs.getOrElseUpdate(u.id, hyperfetch(u))
-    var hvv = hvs.getOrElseUpdate(v.id, hyperfetch(v))
+    var hvu = hvs.getOrElseUpdate(u.id, hyperFetch(u))
+    var hvv = hvs.getOrElseUpdate(v.id, hyperFetch(v))
 
     var reassign = new ArrayBuffer[HyperVertex]();
     reassign += hvu += hvv
@@ -41,7 +38,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     }
 
     while (!reassign.isEmpty) {
-      var hv = reassign.remove(0)
+      val hv = reassign.remove(0)
       if (assign(hv)) {
         reassign ++= hv.neighbors
       }
@@ -52,28 +49,27 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
    * If a vertex doesn't have a hv, create one if it has enough neighbors, merge it to some neighbor otherwise
    * If a vertex already have a hv with more than one vertex, move it out if it has enough neighbors.
    */
-  protected def hyperfetch(u: Vertex): HyperVertex = {
-
-    var shouldIsolate = hasEnoughNeighbors(u);
+  protected def hyperFetch(u: Vertex): HyperVertex = {
+    val shouldIsolate = hasEnoughNeighbors(u);
 
     if (shouldIsolate) {
-      var hv = hvs.getOrElse(u.id, null)
+      val hv = hvs.getOrElse(u.id, null)
       if (null != hv && hv.size > 1) {
         hv.remove(u)
       }
-      var newhv = new HyperVertex(u.id)
+      val newhv = new HyperVertex(u.id)
       newhv.add(u)
       hvs += ((u.id, newhv))
       return newhv;
     } else {
       // Find a neighbor hv to merge to
-      var mergeto = u.neighbors
+      val mergeTo = u.neighbors
         .map(v => hvs.getOrElse(v.id, null))
         .filter(hv => hv != null).toSet.zipWithIndex
         .map(hvi => (joinScore(hvi._1), hvi._1))
         .maxBy(_._1)._2
-      mergeto.add(u)
-      return mergeto;
+      mergeTo.add(u)
+      return mergeTo;
     }
   }
 
