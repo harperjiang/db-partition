@@ -64,16 +64,20 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       val hv = hvs.getOrElse(u.id, null)
       if (null != hv && hv.size > 1) {
         hv.remove(u)
+        hv.updateNeighbors
       }
       val newhv = new HyperVertex(u.id)
       newhv.add(u)
       hvs += ((u.id, newhv))
+      // Add this hv to all neighbors
+      u.neighbors.map(v => hvs.getOrElse(v.id, null))
+        .filter(_ != null).foreach(_.nhvs += hv)
       return newhv;
     } else {
       // Find a neighbor hv to merge to
       val mergeTo = u.neighbors
         .map(v => hvs.getOrElse(v.id, null))
-        .filter(hv => hv != null).toSet.zipWithIndex
+        .filter(_ != null).zipWithIndex
         .map(hvi => (joinScore(u, hvi._1), hvi._1))
         .maxBy(_._1)._2
       mergeTo.add(u)
@@ -90,9 +94,9 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     if (hv.assigned == -1 || force || shouldReassign(hv)) {
       val oldAssign = hv.assigned
 
-      val newAssign = hv.neighbors
+      val newAssign = hv.neighbors.toList
         .map(_.assigned).filter(_ != -1)
-        .groupBy[Int](f => f).toList
+        .groupBy[Int](f => f)
         .map(f => (f._1, assignScore(f._2.size, partitions(f._1).size)))
         .maxBy(_._2)._1
       hv.assign(newAssign)
@@ -163,7 +167,15 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
     private var vertices = HashSet[Vertex]()
 
-    private var neighbours = HashSet[HyperVertex]()
+    var nhvs = HashSet[HyperVertex]()
+
+    def updateNeighbors = {
+      nhvs = vertices.flatMap(_.neighbors)
+        .map(v => hvs.getOrElse(v.id, null))
+        .filter(hv => { hv != null && hv != this })
+    }
+
+    def neighbors: Iterable[HyperVertex] = nhvs
 
     def assigned: Int = partition
 
@@ -180,13 +192,11 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
     def size: Int = vertices.size
 
-    def neighbors: Iterable[HyperVertex] = neighbours
-
     /**
      * The average number of neighbors for each vertex in the hv
      */
     def avgNumNeighbors: Double = {
-      vertices.map(_.numNeighbors).sum / vertices.size
+      vertices.toList.map(_.numNeighbors).sum / vertices.size
     }
 
     def add(u: Vertex) = {
@@ -217,6 +227,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
         hvp = partitions(hv.partition)
       if (partition != -1)
         p = partitions(partition)
+      vertices ++= hv.vertices
       hv.vertices.foreach(u => {
         if (hvp != null)
           hvp.removePrimary(u)
@@ -224,6 +235,9 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
           p.addPrimary(u)
         hvs += ((u.id, this))
       })
+      hv.neighbors.foreach { _.nhvs -= hv }
+      nhvs ++= hv.neighbors
+      nhvs -= this
     }
 
     override def equals(obj: Any): Boolean = {
