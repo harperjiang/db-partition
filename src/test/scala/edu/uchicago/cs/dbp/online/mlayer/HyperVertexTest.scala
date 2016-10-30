@@ -30,9 +30,9 @@ class HyperVertexTest {
     new Edge(v3, v4)
     new Edge(v3, v5)
 
-    hv1 = new mlp.HyperVertex(1)
-    hv2 = new mlp.HyperVertex(2)
-    hv3 = new mlp.HyperVertex(3)
+    hv1 = new mlp.HyperVertex
+    hv2 = new mlp.HyperVertex
+    hv3 = new mlp.HyperVertex
 
     hv1.add(v1)
     hv1.add(v2)
@@ -47,6 +47,10 @@ class HyperVertexTest {
     hv1.updateNeighbors
     hv2.updateNeighbors
     hv3.updateNeighbors
+
+    hv1.avgNumNeighbors = 2
+    hv2.avgNumNeighbors = 2.5
+    hv3.avgNumNeighbors = 1
   }
 
   @Test
@@ -71,29 +75,30 @@ class HyperVertexTest {
   }
 
   @Test
-  def testAvgNumNeighbors(): Unit = {
-    assertEquals(2, hv1.avgNumNeighbors, 0.001)
-    assertEquals(2, hv2.avgNumNeighbors, 0.001)
-    assertEquals(1, hv3.avgNumNeighbors, 0.001)
-  }
-
-  @Test
   def testAssign(): Unit = {
     hv1.assign(5)
     assertEquals(5, v1.primary)
     assertEquals(5, v2.primary)
+    assertEquals(2, mlp.partitions(5).size)
     assertEquals(2, v3.primary)
     assertEquals(2, v4.primary)
     assertEquals(3, v5.primary)
+
+    hv1.assign(-1)
+    assertEquals(-1, v1.primary)
+    assertEquals(-1, v2.primary)
+    assertEquals(0, mlp.partitions(5).size)
   }
 
   @Test
   def testAdd(): Unit = {
     var v6 = new Vertex(6)
+    new Edge(v5, v6)
     hv3.add(v6)
 
     assertEquals(2, hv3.size)
     assertEquals(3, v6.primary)
+    assertEquals(1.5, hv3.avgNumNeighbors, 0.001)
   }
 
   @Test
@@ -101,6 +106,7 @@ class HyperVertexTest {
     hv2.remove(v3)
     assertEquals(-1, v3.primary)
     assertEquals(1, hv2.size)
+    assertEquals(1, hv2.avgNumNeighbors, 0.001)
   }
 
   @Test
@@ -110,8 +116,14 @@ class HyperVertexTest {
     assertEquals(1, v3.primary)
     assertEquals(1, v4.primary)
     assertEquals(4, hv1.size)
+    assertEquals(2.25, hv1.avgNumNeighbors, 0.001)
     assertEquals(1, hv1.neighbors.size)
     assertTrue(hv1.neighbors.toSet.contains(hv3))
+
+    mlp.hvs.foreach(f => assertTrue(f._2 != hv2))
+    assertTrue(hv1.neighbors.toSet.contains(hv3))
+    assertEquals(1, hv3.neighbors.size)
+    assertTrue(hv3.neighbors.toSet.contains(hv1))
   }
 
 }
