@@ -67,16 +67,20 @@ class MLayerPartitionerTest {
     val v7 = new Vertex(7)
     mlp.add(new Edge(v3, v7))
 
-    assertEquals(0, v7.primary)
+    assertEquals(v3.primary, v7.primary)
     assertEquals(hv2, mlp.hvs.get(v7.id).get)
 
     mlp.add(new Edge(v4, v7))
 
-    assertEquals(0, v7.primary)
+    assertEquals(v3.primary, v7.primary)
     assertEquals(hv3, mlp.hvs.get(v7.id).get)
 
+    // v4 will be independent
     mlp.add(new Edge(v3, v4))
+    mlp.add(new Edge(v4, v6))
 
+    val nhv4 = mlp.hvs.getOrElse(v4.id, null)
+    assertEquals(1, nhv4.size)
   }
 
   @Test

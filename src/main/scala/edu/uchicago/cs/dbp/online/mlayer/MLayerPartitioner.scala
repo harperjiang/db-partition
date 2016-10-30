@@ -33,8 +33,8 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     /*
      * Fetch or create a hyper vertex for the vertex 
      */
-    var hvu = hvs.getOrElseUpdate(u.id, hyperFetch(u))
-    var hvv = hvs.getOrElseUpdate(v.id, hyperFetch(v))
+    var hvu = hyperFetch(u)
+    var hvv = hyperFetch(v)
 
     /*
      * Connect two hyper vertices, merge them if necessary 
@@ -65,6 +65,8 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     }
   }
 
+  val vtohv: PartialFunction[Vertex, HyperVertex] = { case v if hvs.contains(v.id) => hvs.getOrElse(v.id, null) }
+
   /**
    * If a vertex doesn't have a hv, create one if it has enough neighbors, merge it to some neighbor otherwise
    * If a vertex already have a hv with more than one vertex, move it out if it has enough neighbors.
@@ -73,9 +75,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     // Either there is enough neighbors, or the vertex 
     // is new and has no known hv neighbor
     val shouldIsolate = hasEnoughNeighbors(u) ||
-      (!hvs.contains(u.id)
-        && u.neighbors.map(v => hvs.getOrElse(v.id, null))
-        .filter(_ != null).isEmpty)
+      (!hvs.contains(u.id) && u.neighbors.collect(vtohv).isEmpty)
 
     if (shouldIsolate) {
       val hv = hvs.getOrElse(u.id, null)
@@ -94,8 +94,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       val newhv = new HyperVertex
       newhv.add(u)
       // Add this hv to all neighbors
-      var nbs = u.neighbors.map(v => hvs.getOrElse(v.id, null))
-        .filter(_ != null)
+      var nbs = u.neighbors.collect(vtohv)
       // XXX update neighbors when creating a new hv
       newhv.nhvs ++= nbs
       nbs.foreach({ _.nhvs += newhv })
@@ -108,14 +107,12 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       }
       // Find a neighbor hv to merge to
       val joinIn = u.neighbors
-        .map(v => hvs.getOrElse(v.id, null))
-        .filter(_ != null).zipWithIndex
+        .collect(vtohv).zipWithIndex
         .map(hvi => (joinScore(u, hvi._1), hvi._1))
         .maxBy(_._1)._2
       joinIn.add(u)
       // XXX update neighbors after adding a new vertex to hv
-      joinIn.nhvs ++= u.neighbors.map(v => hvs.getOrElse(v.id, null))
-        .filter(_ != null) -= joinIn
+      joinIn.nhvs ++= u.neighbors.collect(vtohv) -= joinIn
       joinIn
     }
   }
@@ -130,8 +127,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
       val oldAssign = hv.assigned
       hv.assign(-1)
       val neighborSize = hv.vertices.flatMap(_.neighbors)
-        .toList
-        .map(_.primary).filter(_ != -1)
+        .toList.map(_.primary).filter(_ != -1)
         .groupBy[Int](f => f).map(f => (f._1, f._2.size))
       val newAssign =
         {
@@ -222,9 +218,13 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
     var avgNumNeighbors: Double = 0
 
     def updateNeighbors = {
-      nhvs = vertices.flatMap(_.neighbors)
-        .map(v => hvs.getOrElse(v.id, null))
-        .filter(hv => { hv != null && hv != this })
+      nhvs = vertices.flatMap(_.neighbors).collect {
+        case v: Vertex if hvs.contains(v.id) && this != hvs.get(v.id).get => {
+          hvs.get(v.id).get
+        }
+      }
+      //        .map(v => hvs.getOrElse(v.id, null))
+      //        .filter(hv => { hv != null && hv != this })
     }
 
     def neighbors: Iterable[HyperVertex] = nhvs
@@ -247,8 +247,8 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
 
     def add(u: Vertex) = {
       // Recompute avg num neighbor
-      val numNewEdge = u.neighbors.toList.map { v => hvs.getOrElse(v.id, null) }
-        .filter { _ == this }.size + u.numNeighbors
+      val numNewEdge = u.neighbors.toList
+        .collect { case v if hvs.contains(v.id) && this == hvs.getOrElse(v.id, null) => v }.size + u.numNeighbors
       avgNumNeighbors = (avgNumNeighbors * size + numNewEdge) / (size + 1)
       // Data Structure
       vertices += u
