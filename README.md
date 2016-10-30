@@ -14,8 +14,10 @@ Online partitioner employs a one-pass method which scan each edge in the graph a
 
 `LeopardPartitioner` provides an implementation to the method described [here](http://www.vldb.org/pvldb/vol9/p540-huang.pdf)
 
-### MIPPartitioner
+### Mixed Integer Partitioner
 
-`MIPPartitioner` is an implementation using relaxed linear program to solve the problem.
+`MIPPartitioner` employs an algorithm using relaxed linear program to do online partitioning.
 
 ### MLayerPartitioner
+
+`MLayerPartitioner` targets at solving the problem that other online partitioners don't work well on power-law graphs. Power-law graphs exhibits the following properties: very few nodes have extremely high degrees and most nodes have low degrees. `MLayerPartitioner` will group vertices into hyper vertices and each hyper vertex will be assigned to a partition, together with all vertices under it.
