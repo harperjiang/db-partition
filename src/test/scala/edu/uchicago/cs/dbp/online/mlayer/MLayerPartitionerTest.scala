@@ -24,7 +24,7 @@ class MLayerPartitionerTest {
   @Before
   def prepare: Unit = {
     // Set params for test
-    MLayerParams.get.neighborThreshold = 5
+    MLayerParams.instance.neighborThreshold = 5
 
     hv1 = new mlp.HyperVertex
     hv2 = new mlp.HyperVertex
