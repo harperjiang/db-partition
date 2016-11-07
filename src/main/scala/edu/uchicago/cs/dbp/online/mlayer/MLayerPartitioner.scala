@@ -21,10 +21,7 @@ class MLayerPartitioner(nump: Int) extends AbstractPartitioner(nump) {
   var hvs = scala.collection.mutable.HashMap[Int, HyperVertex]();
 
   /**
-   *
-   *
-   *
-   * TODO Need to reevaluate whether it is necessary to maintain a hyper vertex level neighbors
+   *  TODO Need to reevaluate whether it is necessary to maintain a hyper vertex level neighbors
    */
   def add(e: Edge) = {
     val u = e.vertices(0)
